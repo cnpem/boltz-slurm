@@ -3,7 +3,7 @@ import SequenceInput from './SequenceInput'
 import ConstraintInput from './ConstraintInput'
 import TemplateInput from './TemplateInput'
 
-const InputView = ({ onJobSubmitted, onShowLoading }) => {
+const InputView = ({ onJobSubmitted, onShowLoading, onBackToHome }) => {
   const [jobName, setJobName] = useState('')
   const [sequences, setSequences] = useState([])
   const [constraints, setConstraints] = useState([])
@@ -11,6 +11,202 @@ const InputView = ({ onJobSubmitted, onShowLoading }) => {
   const [enableAffinity, setEnableAffinity] = useState(false)
   const [affinityBinder, setAffinityBinder] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showExamples, setShowExamples] = useState(false)
+
+  // Example templates
+  const examples = [
+    {
+      id: 'affinity',
+      name: 'Protein-Ligand Affinity',
+      description: 'Predict binding affinity between a protein and small molecule',
+      data: {
+        jobName: 'Protein-Ligand Affinity Example',
+        sequences: [
+          {
+            id: Date.now().toString() + '_1',
+            entity_type: 'protein',
+            chainId: 'A',
+            sequence: 'MVTPEGNVSLVDESLLVGVTDEDRAVRSAHQFYERLIGLWAPAVMEAAHELGVFAALAEAPADSGELARRLDCDARAMRVLLDALYAYDVIDRIHDTNGFRYLLSAEARECLLPGTLFSLVGKFMHDINVAWPAWRNLAEVVRHGARDTSGAESPNGIAQEDYESLVGGINFWAPPIVTTLSRKLRASGRSGDATASVLDVGCGTGLYSQLLLREFPRWTATGLDVERIATLANAQALRLGVEERFATRAGDFWRGGWGTGYDLVLFANIFHLQTPASAVRLMRHAAACLAPDGLVAVVDQIVDADREPKTPQDRFALLFAASMTNTGGGDAYTFQEYEEWFTAAGLQRIETLDTPMHRILLARRATEPSAVPEGQASENLYFQ',
+            smiles: '',
+            ccd: '',
+            msa: '',
+            cyclic: false
+          },
+          {
+            id: Date.now().toString() + '_2',
+            entity_type: 'ligand',
+            chainId: 'B',
+            sequence: '',
+            smiles: 'N[C@@H](Cc1ccc(O)cc1)C(=O)O',
+            ccd: '',
+            msa: '',
+            cyclic: false
+          }
+        ],
+        affinityEnabled: true,
+        affinityBinder: 'B'
+      }
+    },
+    {
+      id: 'cyclic',
+      name: 'Cyclic Protein',
+      description: 'Predict structure of a cyclic protein peptide',
+      data: {
+        jobName: 'Cyclic Protein Example',
+        sequences: [
+          {
+            id: Date.now().toString() + '_1',
+            entity_type: 'protein',
+            chainId: 'A',
+            sequence: 'QLEDSEVEAVAKG',
+            smiles: '',
+            ccd: '',
+            msa: '',
+            cyclic: true
+          }
+        ],
+        affinityEnabled: false,
+        affinityBinder: ''
+      }
+    },
+    {
+      id: 'multiple_ligands',
+      name: 'Multiple Ligands',
+      description: 'Protein with multiple ligands using CCD and SMILES',
+      data: {
+        jobName: 'Multiple Ligands Example',
+        sequences: [
+          {
+            id: Date.now().toString() + '_1',
+            entity_type: 'protein',
+            chainId: 'A',
+            sequence: 'MVTPEGNVSLVDESLLVGVTDEDRAVRSAHQFYERLIGLWAPAVMEAAHELGVFAALAEAPADSGELARRLDCDARAMRVLLDALYAYDVIDRIHDTNGFRYLLSAEARECLLPGTLFSLVGKFMHDINVAWPAWRNLAEVVRHGARDTSGAESPNGIAQEDYESLVGGINFWAPPIVTTLSRKLRASGRSGDATASVLDVGCGTGLYSQLLLREFPRWTATGLDVERIATLANAQALRLGVEERFATRAGDFWRGGWGTGYDLVLFANIFHLQTPASAVRLMRHAAACLAPDGLVAVVDQIVDADREPKTPQDRFALLFAASMTNTGGGDAYTFQEYEEWFTAAGLQRIETLDTPMHRILLARRATEPSAVPEGQASENLYFQ',
+            smiles: '',
+            ccd: '',
+            msa: '',
+            cyclic: false
+          },
+          {
+            id: Date.now().toString() + '_2',
+            entity_type: 'ligand',
+            chainId: 'C',
+            sequence: '',
+            smiles: '',
+            ccd: 'SAH',
+            msa: '',
+            cyclic: false
+          },
+          {
+            id: Date.now().toString() + '_3',
+            entity_type: 'ligand',
+            chainId: 'D',
+            sequence: '',
+            smiles: 'N[C@@H](Cc1ccc(O)cc1)C(=O)O',
+            ccd: '',
+            msa: '',
+            cyclic: false
+          }
+        ],
+        affinityEnabled: false,
+        affinityBinder: ''
+      }
+    },
+    {
+      id: 'multimer',
+      name: 'Protein Multimer',
+      description: 'Predict complex structure of multiple proteins',
+      data: {
+        jobName: 'Protein Multimer Example',
+        sequences: [
+          {
+            id: Date.now().toString() + '_1',
+            entity_type: 'protein',
+            chainId: 'A',
+            sequence: 'MAHHHHHHVAVDAVSFTLLQDQLQSVLDTLSEREAGVVRLRFGLTDGQPRTLDEIGQVYGVTRERIRQIESKTMSKLRHPSRSQVLRDYLDGSSGSGTPEERLLRAIFGEKA',
+            smiles: '',
+            ccd: '',
+            msa: '',
+            cyclic: false
+          },
+          {
+            id: Date.now().toString() + '_2',
+            entity_type: 'protein',
+            chainId: 'B',
+            sequence: 'MRYAFAAEATTCNAFWRNVDMTVTALYEVPLGVCTQDPDRWTTTPDDEAKTLCRACPRRWLCARDAVESAGAEGLWAGVVIPESGRARAFALGQLRSLAERNGYPVRDHRVSAQSA',
+            smiles: '',
+            ccd: '',
+            msa: '',
+            cyclic: false
+          }
+        ],
+        affinityEnabled: false,
+        affinityBinder: ''
+      }
+    },
+    // {
+    //   id: 'pocket_constraints',
+    //   name: 'Pocket Constraints',
+    //   description: 'Protein-ligand prediction with pocket constraints',
+    //   data: {
+    //     jobName: 'Pocket Constraints Example',
+    //     sequences: [
+    //       {
+    //         id: Date.now().toString() + '_1',
+    //         entity_type: 'protein',
+    //         chainId: 'A1',
+    //         sequence: 'MYNMRRLSLSPTFSMGFHLLVTVSLLFSHVDHVIAETEMEGEGNETGECTGSYYCKKGVILPIWEPQDPSFGDKIARATVYFVAMVYMFLGVSIIADRFMSSIEVITSQEKEITIKKPNGETTKTTVRIWNETVSNLTLMALGSSAPEILLSVIEVCGHNFTAGDLGPSTIVGSAAFNMFIIIALCVYVVPDGETRKIKHLRVFFVTAAWSIFAYTWLYIILSVISPGVVEVWEGLLTFFFFPICVVFAWVADRRLLFYKYVYKRYRAGKQRGMIIEHEGDRPSSKTEIEMDGKVVNSHVENFLDGALVLEVDERDQDDEEARREMARILKELKQKHPDKEIEQLIELANYQVLSQQQKSRAFYRIQATRLMTGAGNILKRHAADQARKAVSMHEVNTEVTENDPVSKIFFEQGTYQCLENCGTVALTIIRRGGDLTNTVFVDFRTEDGTANAGSDYEFTEGTVVFKPGDTQKEIRVGIIDDDIFEEDENFLVHLSNVKVSSEASEDGILEANHVSTLACLGSPSTATVTIFDDDHAGIFTFEEPVTHVSESIGIMEVKVLRTSGARGNVIVPYKTIEGTARGGGEDFEDTCGELEFQNDEIVKIITIRIFDREEYEKECSFSLVLEEPKWIRRGMKGGFTITDEYDDKQPLTSKEEEERRIAEMGRPILGEHTKLEVIIEESYEFKSTVDKLIKKTNLALVVGTNSWREQFIEAITVSAGEDDDDDECGEEKLPSCFDYVMHFLTVFWKVLFAFVPPTEYWNGWACFIVSILMIGLLTAFIGDLASHFGCTIGLKDSVTAVVFVALGTSVPDTFASKVAATQDQYADASIGNVTGSNAVNVFLGIGVAWSIAAIYHAANGEQFKVSPGTLAFSVTLFTIFAFINVGVLLYRRRPEIGGELGGPRTAKLLTSCLFVLLWLLYIFFSSLEAYCHIKGF',
+    //         smiles: '',
+    //         ccd: '',
+    //         msa: '',
+    //         cyclic: false
+    //       },
+    //       {
+    //         id: Date.now().toString() + '_2',
+    //         entity_type: 'ligand',
+    //         chainId: 'B1',
+    //         sequence: '',
+    //         smiles: '',
+    //         ccd: 'EKY',
+    //         msa: '',
+    //         cyclic: false
+    //       }
+    //     ],
+    //     affinityEnabled: false,
+    //     affinityBinder: '',
+    //     constraints: [
+    //       {
+    //         id: Date.now().toString() + '_constraint_1',
+    //         type: 'pocket',
+    //         binder: 'B1',
+    //         contacts: 'A1,829\nA1,138',
+    //         maxDistance: ''
+    //       }
+    //     ]
+    //   }
+    // },
+    {
+      id: 'single_protein',
+      name: 'Single Protein',
+      description: 'Simple protein structure prediction',
+      data: {
+        jobName: 'Single Protein Example',
+        sequences: [
+          {
+            id: Date.now().toString() + '_1',
+            entity_type: 'protein',
+            chainId: 'A',
+            sequence: 'QLEDSEVEAVAKGLEEMYANGVTEDNFKNYVKNNFAQQEISSVEEELNVNISDSCVANKIKDEFFAMISISAIVKAAQKKAWKELAVTVLRFAKANGLKTNAIIVAGQLALWAVQCG',
+            smiles: '',
+            ccd: '',
+            msa: '',
+            cyclic: false
+          }
+        ],
+        affinityEnabled: false,
+        affinityBinder: ''
+      }
+    }
+  ]
 
   // Initialize with default protein sequence and ligand
   useEffect(() => {
@@ -151,19 +347,29 @@ const InputView = ({ onJobSubmitted, onShowLoading }) => {
   }
 
   const processConstraintsForSubmission = () => {
+    const parseContactTokens = (tokens) => {
+      return tokens.map(token => {
+        // Convert string residue indices to integers
+        if (!isNaN(token) && token !== '') {
+          return parseInt(token, 10)
+        }
+        return token
+      })
+    }
+
     return constraints.map(constraint => {
       const result = {}
       
       if (constraint.type === 'bond') {
         result.bond = {
-          atom1: constraint.atom1.split(',').map(s => s.trim()),
-          atom2: constraint.atom2.split(',').map(s => s.trim())
+          atom1: parseContactTokens(constraint.atom1.split(',').map(s => s.trim())),
+          atom2: parseContactTokens(constraint.atom2.split(',').map(s => s.trim()))
         }
       } else if (constraint.type === 'pocket') {
         const contacts = constraint.contacts.split('\n')
           .map(line => line.trim())
           .filter(line => line)
-          .map(line => line.split(',').map(s => s.trim()))
+          .map(line => parseContactTokens(line.split(',').map(s => s.trim())))
         
         result.pocket = {
           binder: constraint.binder,
@@ -175,8 +381,8 @@ const InputView = ({ onJobSubmitted, onShowLoading }) => {
         }
       } else if (constraint.type === 'contact') {
         result.contact = {
-          token1: constraint.token1.split(',').map(s => s.trim()),
-          token2: constraint.token2.split(',').map(s => s.trim())
+          token1: parseContactTokens(constraint.token1.split(',').map(s => s.trim())),
+          token2: parseContactTokens(constraint.token2.split(',').map(s => s.trim()))
         }
         
         if (constraint.max_distance) {
@@ -277,36 +483,145 @@ const InputView = ({ onJobSubmitted, onShowLoading }) => {
     }))
   }
 
+  const loadExample = (example) => {
+    setJobName(example.data.jobName)
+    
+    // Generate fresh IDs for the sequences to avoid conflicts
+    const sequencesWithNewIds = example.data.sequences.map((seq, index) => ({
+      ...seq,
+      id: Date.now().toString() + '_seq_' + index
+    }))
+    
+    setSequences(sequencesWithNewIds)
+    setEnableAffinity(example.data.affinityEnabled)
+    setAffinityBinder(example.data.affinityBinder)
+    setShowExamples(false)
+    
+    // Load constraints if they exist in the example
+    if (example.data.constraints && example.data.constraints.length > 0) {
+      const constraintsWithNewIds = example.data.constraints.map((constraint, index) => ({
+        ...constraint,
+        id: Date.now().toString() + '_constraint_' + index
+      }))
+      setConstraints(constraintsWithNewIds)
+    } else {
+      setConstraints([])
+    }
+    
+    // Load templates if they exist in the example
+    if (example.data.templates && example.data.templates.length > 0) {
+      const templatesWithNewIds = example.data.templates.map((template, index) => ({
+        ...template,
+        id: Date.now().toString() + '_template_' + index
+      }))
+      setTemplates(templatesWithNewIds)
+    } else {
+      setTemplates([])
+    }
+    
+    // Show a brief notification
+    setTimeout(() => {
+      alert(`Loaded example: ${example.name}`)
+    }, 100)
+  }
+
   return (
     <div className="flex-1 p-8 overflow-y-auto main-container">
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="card-header mb-8">
-          <h1 className="text-4xl font-black text-gray-800 mb-4 flex items-center">
-            Run New Protein-Ligand Co-Folding
+          <div className="flex items-center justify-between mb-6">
+            <button onClick={onBackToHome} className="btn-secondary">
+              ← Back to Home
+            </button>
+          </div>
+          
+          <h1 className="text-4xl font-black text-gray-800 mb-4">
+            Create New Prediction
           </h1>
-          <p className="text-lg text-gray-700 font-semibold">Predict protein-ligand binding affinity using Boltz</p>
+          <p className="text-gray-600 text-lg font-semibold">
+            Configure your Boltz-2 prediction job
+          </p>
+        </div>
+
+        {/* Examples Section */}
+        <div className="mb-8">
+          <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border-3 border-blue-300 rounded-2xl p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-2xl font-black text-blue-800 mb-2">Quick Start Examples</h2>
+                <p className="text-blue-700 font-semibold">Load pre-configured examples to get started quickly</p>
+              </div>
+              <button
+                onClick={() => setShowExamples(!showExamples)}
+                className="btn-primary bg-blue-600 hover:bg-blue-700 flex items-center space-x-2"
+              >
+                <span>{showExamples ? 'Hide' : 'Show'} Examples</span>
+                <svg 
+                  className={`w-4 h-4 transition-transform ${showExamples ? 'rotate-180' : ''}`} 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            </div>
+            
+            {showExamples && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {examples.map((example) => (
+                  <div
+                    key={example.id}
+                    className="bg-white rounded-xl border-2 border-blue-200 p-4 hover:border-blue-400 hover:shadow-lg transition-all duration-200 cursor-pointer"
+                    onClick={() => loadExample(example)}
+                  >
+                    <h3 className="font-bold text-blue-800 mb-2">{example.name}</h3>
+                    <p className="text-sm text-blue-600 mb-3">{example.description}</p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex space-x-1">
+                        {example.data.sequences.map((sequence, idx) => (
+                          <span
+                            key={idx}
+                            className={`px-2 py-1 rounded text-xs font-semibold ${
+                              sequence.entity_type === 'protein' 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-purple-100 text-purple-800'
+                            }`}
+                          >
+                            {sequence.entity_type}
+                          </span>
+                        ))}
+                      </div>
+                      <button className="text-blue-600 hover:text-blue-800 font-semibold text-sm">
+                        Load →
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Job Name Section */}
-          <div className="card">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">Job Information</h2>
+          <div className="input-section">
+            <h2 className="section-title">Job Information</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">
+                <label className="input-label">
                   Job Name (Optional)
                 </label>
                 <input
                   type="text"
+                  className="input-field"
                   value={jobName}
                   onChange={(e) => setJobName(e.target.value)}
                   placeholder="Enter a descriptive name for this job..."
-                  className="form-input"
-                  maxLength={100}
                 />
-                <p className="text-sm text-gray-500 mt-1">
-                  Give your job a meaningful name to easily identify it later. If left empty, a unique ID will be used.
+                <p className="text-sm text-gray-600 mt-2 font-medium">
+                  A custom name helps you identify this job later. If left empty, a unique ID will be generated.
                 </p>
               </div>
             </div>

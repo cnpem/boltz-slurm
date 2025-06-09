@@ -102,6 +102,7 @@ Start at the landing page which provides an overview of Boltz-2 capabilities and
 
 ### 2. **Create New Job**
 - Click "Try Boltz-2 Now" or "+ New Job"
+- **Quick Start**: Load pre-configured examples for different prediction types
 - Provide an optional job name for easy identification
 - Add protein and ligand sequences
 - Configure prediction properties (binding affinity, etc.)
@@ -117,6 +118,22 @@ Start at the landing page which provides an overview of Boltz-2 capabilities and
 - Comprehensive binding affinity analysis
 - Detailed confidence metrics
 - Built-in interpretation guides
+
+### 5. **Download Results**
+- Download 3D structures (PDB format)
+- Export prediction results (JSON format)
+- Download complete archives (ZIP with all files)
+- Quick download from sidebar for completed jobs
+
+## 📖 Example Templates
+
+The interface includes six pre-configured examples to help you get started:
+
+1. **Protein-Ligand Affinity**: Predict binding affinity between protein and small molecule
+2. **Cyclic Protein**: Structure prediction for cyclic peptides
+3. **Multiple Ligands**: Protein with multiple ligands using CCD codes and SMILES
+4. **Protein Multimer**: Complex structure prediction for protein assemblies
+5. **Single Protein**: Simple protein structure prediction
 
 
 

@@ -348,10 +348,26 @@ async def predict_boltz(request: BoltzRequest):
                 if prop_dict:
                     yaml_data["properties"].append(prop_dict)
         
-        # Save YAML file in job directory
+        # Save YAML file in job directory with custom formatting for contacts
         yaml_file = job_path / "boltz_input.yaml"
+        
+        # Custom YAML formatting to ensure contacts use flow style
+        class CustomDumper(yaml.SafeDumper):
+            def write_line_break(self, data=None):
+                super().write_line_break(data)
+
+        def represent_list(dumper, data):
+            # Check if this is a contacts array (list of lists with mixed types)
+            if (isinstance(data, list) and len(data) > 0 and 
+                isinstance(data[0], list) and len(data[0]) >= 2):
+                # This looks like contacts - use flow style
+                return dumper.represent_sequence('tag:yaml.org,2002:seq', data, flow_style=True)
+            return dumper.represent_sequence('tag:yaml.org,2002:seq', data, flow_style=False)
+
+        CustomDumper.add_representer(list, represent_list)
+        
         with open(yaml_file, 'w') as f:
-            yaml.dump(yaml_data, f, default_flow_style=False)
+            yaml.dump(yaml_data, f, Dumper=CustomDumper, default_flow_style=False)
         
         # Create output directory for Boltz results
         output_dir = job_path / "boltz_output"

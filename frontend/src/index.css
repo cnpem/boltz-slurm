@@ -27,6 +27,22 @@
     @apply w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-200 focus:border-blue-500 transition-all duration-200 bg-white shadow-sm;
   }
   
+  .input-section {
+    @apply bg-white rounded-2xl shadow-xl border-2 border-gray-200 p-8 hover:shadow-2xl transition-all duration-200;
+  }
+  
+  .input-field {
+    @apply w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-200 focus:border-blue-500 transition-all duration-200 bg-white shadow-sm;
+  }
+  
+  .input-label {
+    @apply block text-sm font-bold text-gray-700 mb-2;
+  }
+  
+  .section-title {
+    @apply text-2xl font-bold text-gray-800 mb-6;
+  }
+  
   .card {
     @apply bg-white rounded-2xl shadow-xl border-2 border-gray-200 p-8 hover:shadow-2xl transition-all duration-200;
   }
