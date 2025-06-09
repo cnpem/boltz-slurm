@@ -12,6 +12,8 @@ import datetime
 import hashlib
 import json
 from typing import List, Optional
+import zipfile
+import io
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -625,3 +627,104 @@ async def get_job_pdb(job_id: str):
         media_type="chemical/x-pdb",
         filename=f"{job_id}.pdb"
     )
+
+@app.get("/api/jobs/{job_id}/download")
+async def download_job_archive(job_id: str):
+    """Download a ZIP archive containing all job files"""
+    job_path = jobs_dir / job_id
+    if not job_path.exists():
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    # Load job info
+    job_info = load_job_info(job_path)
+    if not job_info:
+        raise HTTPException(status_code=404, detail="Job info not found")
+    
+    # Create ZIP file in memory
+    zip_buffer = io.BytesIO()
+    
+    try:
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            # Add job info as JSON
+            job_info_json = json.dumps(job_info, indent=2, default=str)
+            zip_file.writestr(f"{job_id}_info.json", job_info_json)
+            
+            # Add YAML input file
+            yaml_file = job_path / "boltz_input.yaml"
+            if yaml_file.exists():
+                zip_file.write(yaml_file, f"{job_id}_input.yaml")
+            
+            # Add PDB file if available
+            pdb_paths = [
+                job_path / "boltz_output" / "boltz_input.pdb",
+                job_path / "boltz_output" / "boltz_results_boltz_input" / "predictions" / "boltz_input" / "boltz_input.pdb",
+                job_path / "boltz_output" / "boltz_results_boltz_input" / "predictions" / "boltz_input" / "boltz_input_model_0.pdb",
+                job_path / "boltz_output" / "boltz_input_model_0.pdb"
+            ]
+            
+            # Also check for any .pdb files in the output directory
+            output_dir = job_path / "boltz_output"
+            if output_dir.exists():
+                for pdb_file in output_dir.rglob("*.pdb"):
+                    pdb_paths.append(pdb_file)
+            
+            pdb_added = False
+            for pdb_path in pdb_paths:
+                if pdb_path.exists() and not pdb_added:
+                    zip_file.write(pdb_path, f"{job_id}_structure.pdb")
+                    pdb_added = True
+                    break
+            
+            # Add results files
+            result_files = [
+                ("affinity_boltz_input.json", f"{job_id}_affinity_results.json"),
+                ("confidence_boltz_input_model_0.json", f"{job_id}_confidence_results.json")
+            ]
+            
+            for result_file, archive_name in result_files:
+                possible_paths = [
+                    job_path / "boltz_output" / result_file,
+                    job_path / "boltz_output" / "boltz_results_boltz_input" / "predictions" / "boltz_input" / result_file
+                ]
+                
+                for path in possible_paths:
+                    if path.exists():
+                        zip_file.write(path, archive_name)
+                        break
+            
+            # Add formatted results
+            try:
+                response = await get_job_results(job_id)
+                formatted_results = json.dumps(response, indent=2, default=str)
+                zip_file.writestr(f"{job_id}_formatted_results.json", formatted_results)
+            except:
+                pass  # Skip if formatted results not available
+            
+            # Add any other important files from the output directory
+            if output_dir.exists():
+                for file_path in output_dir.rglob("*.log"):
+                    if file_path.is_file():
+                        relative_path = file_path.relative_to(job_path)
+                        zip_file.write(file_path, f"{job_id}_{relative_path.name}")
+        
+        zip_buffer.seek(0)
+        
+        # Return the ZIP file
+        job_name = job_info.get('job_name', job_id)
+        filename = f"{job_name}_complete.zip" if job_info.get('job_name') else f"{job_id}_complete.zip"
+        
+        # Create a temporary file for the ZIP
+        import tempfile
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.zip') as tmp_file:
+            tmp_file.write(zip_buffer.getvalue())
+            tmp_file_path = tmp_file.name
+        
+        return FileResponse(
+            path=tmp_file_path,
+            media_type="application/zip",
+            filename=filename
+        )
+        
+    except Exception as e:
+        logger.error(f"Failed to create ZIP archive for job {job_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to create download archive: {str(e)}")

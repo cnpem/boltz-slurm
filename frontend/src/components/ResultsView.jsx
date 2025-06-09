@@ -33,6 +33,78 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
     }
   }
 
+  const downloadPDB = async () => {
+    try {
+      const response = await fetch(`/api/jobs/${jobId}/pdb`)
+      if (!response.ok) {
+        throw new Error('PDB file not found')
+      }
+      
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.style.display = 'none'
+      a.href = url
+      a.download = `${jobData?.job_name || jobId}_structure.pdb`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (error) {
+      console.error('Failed to download PDB:', error)
+      alert('Failed to download PDB file. The structure may not be available yet.')
+    }
+  }
+
+  const downloadResults = async () => {
+    try {
+      const response = await fetch(`/api/jobs/${jobId}/results`)
+      if (!response.ok) {
+        throw new Error('Results not found')
+      }
+      
+      const data = await response.json()
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.style.display = 'none'
+      a.href = url
+      a.download = `${jobData?.job_name || jobId}_results.json`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (error) {
+      console.error('Failed to download results:', error)
+      alert('Failed to download results file.')
+    }
+  }
+
+  const downloadAllFiles = async () => {
+    try {
+      const response = await fetch(`/api/jobs/${jobId}/download`)
+      if (!response.ok) {
+        throw new Error('Download archive not available')
+      }
+      
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.style.display = 'none'
+      a.href = url
+      a.download = `${jobData?.job_name || jobId}_complete.zip`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (error) {
+      console.error('Failed to download complete archive:', error)
+      // Fallback to individual downloads
+      await downloadPDB()
+      await downloadResults()
+    }
+  }
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString()
   }
@@ -395,6 +467,44 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
             <button onClick={onBackToInput} className="btn-secondary">
               ← Back to Input
             </button>
+            
+            {/* Download Controls */}
+            {jobData.status === 'completed' && (
+              <div className="flex space-x-3">
+                <button 
+                  onClick={downloadPDB}
+                  className="btn-primary flex items-center space-x-2"
+                  title="Download PDB structure file"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span>PDB</span>
+                </button>
+                
+                <button 
+                  onClick={downloadResults}
+                  className="btn-primary flex items-center space-x-2"
+                  title="Download results as JSON"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                  </svg>
+                  <span>Results</span>
+                </button>
+                
+                <button 
+                  onClick={downloadAllFiles}
+                  className="btn-primary bg-green-600 hover:bg-green-700 flex items-center space-x-2"
+                  title="Download all files"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  <span>All Files</span>
+                </button>
+              </div>
+            )}
           </div>
           
           <h1 className="text-4xl font-black text-gray-800 mb-4">
@@ -484,7 +594,19 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
         {jobData.status === 'completed' && (
           <div className="mb-8">
             <div className="results-section from-slate-50 to-gray-50 border-gray-300">
-              <h3 className="text-2xl font-black text-gray-800 mb-6">3D Structure</h3>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-black text-gray-800">3D Structure</h3>
+                <button 
+                  onClick={downloadPDB}
+                  className="btn-secondary flex items-center space-x-2"
+                  title="Download PDB file"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span>Download Structure</span>
+                </button>
+              </div>
               <MolstarViewer jobId={jobId} className="w-full rounded-xl border-3 border-gray-300 shadow-xl" />
             </div>
           </div>
@@ -495,18 +617,42 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
             {resultsData.affinity && (
               <div className="results-section affinity-section">
-                <h3 className="text-2xl font-black text-gray-800 mb-6 flex items-center">
-                  Affinity Results
-                </h3>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-2xl font-black text-gray-800 flex items-center">
+                    Affinity Results
+                  </h3>
+                  <button 
+                    onClick={downloadResults}
+                    className="btn-secondary text-sm flex items-center space-x-1"
+                    title="Download detailed results"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                    </svg>
+                    <span>Export</span>
+                  </button>
+                </div>
                 {renderAffinityResults(resultsData.affinity)}
               </div>
             )}
 
             {resultsData.confidence && (
               <div className="results-section confidence-section">
-                <h3 className="text-2xl font-black text-gray-800 mb-6 flex items-center">
-                  Confidence Results
-                </h3>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-2xl font-black text-gray-800 flex items-center">
+                    Confidence Results
+                  </h3>
+                  <button 
+                    onClick={downloadResults}
+                    className="btn-secondary text-sm flex items-center space-x-1"
+                    title="Download detailed results"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                    </svg>
+                    <span>Export</span>
+                  </button>
+                </div>
                 {renderConfidenceResults(resultsData.confidence)}
               </div>
             )}

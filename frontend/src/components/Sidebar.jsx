@@ -31,6 +31,31 @@ const Sidebar = ({ jobs, selectedJobId, onSelectJob, onNewJob, onRefreshJobs, on
     return job.job_name || job.job_id
   }
 
+  const downloadJobFiles = async (e, jobId, jobName) => {
+    e.stopPropagation() // Prevent job selection when clicking download
+    
+    try {
+      const response = await fetch(`/api/jobs/${jobId}/download`)
+      if (!response.ok) {
+        throw new Error('Download failed')
+      }
+      
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.style.display = 'none'
+      a.href = url
+      a.download = `${jobName || jobId}_complete.zip`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (error) {
+      console.error('Failed to download job files:', error)
+      alert('Failed to download job files. Please try again.')
+    }
+  }
+
   return (
     <div className="w-96 sidebar-container flex flex-col h-screen fixed left-0 top-20 z-10">
       {/* Fixed Header */}
@@ -82,6 +107,7 @@ const Sidebar = ({ jobs, selectedJobId, onSelectJob, onNewJob, onRefreshJobs, on
             {jobs.map((job) => {
               const { date, time } = formatDate(job.timestamp)
               const isSelected = selectedJobId === job.job_id
+              const isCompleted = job.status === 'completed'
               
               return (
                 <div
@@ -104,9 +130,22 @@ const Sidebar = ({ jobs, selectedJobId, onSelectJob, onNewJob, onRefreshJobs, on
                         </div>
                       )}
                     </div>
-                    <span className={`status-badge flex-shrink-0 ${getStatusColor(job.status)}`}>
-                      {job.status}
-                    </span>
+                    <div className="flex items-center space-x-2 flex-shrink-0">
+                      {isCompleted && (
+                        <button
+                          onClick={(e) => downloadJobFiles(e, job.job_id, job.job_name)}
+                          className="text-green-600 hover:text-green-800 hover:bg-green-100 p-1.5 rounded transition-all duration-200 border border-transparent hover:border-green-300"
+                          title="Download all files"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                        </button>
+                      )}
+                      <span className={`status-badge ${getStatusColor(job.status)}`}>
+                        {job.status}
+                      </span>
+                    </div>
                   </div>
                   
                   <div className="text-sm text-gray-600 space-y-1">

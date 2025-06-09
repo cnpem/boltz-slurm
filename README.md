@@ -2,9 +2,11 @@
 
 A user-friendly web interface for running Boltz-2 predictions with visualizations and streamlined workflows for protein-ligand co-folding and binding affinity prediction.
 
-I have made this because Biology is a beautiful field and it's software should be beautiful too.
+My reason for making this is because Biology is a beautiful field and it's software should be beautiful too.
 
 Feel free to use and modify this for your own purposes. In the first iteration, I have made this only for local use. If someone has GPUs and would like to host it for others to try, please reach out to me.
+
+If you have any suggestions or feedback please feel free to open an issue or reach out to me.
 
 **Boltz-2** is a revolutionary biomolecular foundation model developed by researchers at MIT and Recursion that approaches the accuracy of physics-based FEP methods while running 1000x faster, making accurate in silico screening practical for early-stage drug discovery.
 
@@ -140,5 +142,6 @@ boltz-gui/
 - **Boltz Team** at MIT Jameel Clinic and Recursion for developing Boltz-2
 - **Original Boltz Repository**: https://github.com/jwohlwend/boltz/
 - **Molstar** for 3D molecular visualization capabilities
+- **Cursor** for helping me bring this to life quickly, especially the frontend.
 
 
