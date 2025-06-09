@@ -45,7 +45,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
+    <div className="min-h-screen main-container flex">
       {/* Sidebar */}
       <Sidebar 
         jobs={jobs}
@@ -56,7 +56,7 @@ function App() {
       />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-h-screen">
         {currentView === 'input' && (
           <InputView 
             onJobSubmitted={loadJobs}

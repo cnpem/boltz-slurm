@@ -18,21 +18,21 @@ const Sidebar = ({ jobs, selectedJobId, onSelectJob, onNewJob, onRefreshJobs }) 
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'completed': return 'text-green-600 bg-green-100'
-      case 'running': return 'text-blue-600 bg-blue-100'
-      case 'failed': return 'text-red-600 bg-red-100'
-      case 'timeout': return 'text-orange-600 bg-orange-100'
-      case 'error': return 'text-red-600 bg-red-100'
-      default: return 'text-gray-600 bg-gray-100'
+      case 'completed': return 'text-green-700 bg-green-100 border-green-300'
+      case 'running': return 'text-blue-700 bg-blue-100 border-blue-300'
+      case 'failed': return 'text-red-700 bg-red-100 border-red-300'
+      case 'timeout': return 'text-orange-700 bg-orange-100 border-orange-300'
+      case 'error': return 'text-red-700 bg-red-100 border-red-300'
+      default: return 'text-gray-700 bg-gray-100 border-gray-300'
     }
   }
 
   return (
-    <div className="w-80 bg-white shadow-lg flex flex-col h-screen">
+    <div className="w-96 sidebar-container flex flex-col h-screen">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-gray-800 flex items-center">
+      <div className="p-6 border-b-4 border-gray-300 bg-white shadow-lg">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-black text-gray-800 flex items-center">
             🧬 Boltz Jobs
           </h2>
           <button
@@ -44,10 +44,10 @@ const Sidebar = ({ jobs, selectedJobId, onSelectJob, onNewJob, onRefreshJobs }) 
         </div>
         
         <div className="flex items-center justify-between">
-          <span className="text-gray-600 font-medium">Recent Jobs</span>
+          <span className="text-gray-700 font-bold text-lg">Recent Jobs</span>
           <button
             onClick={onRefreshJobs}
-            className="text-gray-500 hover:text-gray-700 p-1 rounded"
+            className="text-gray-600 hover:text-gray-800 p-2 rounded-lg hover:bg-gray-100 transition-all duration-200 border-2 border-transparent hover:border-gray-300"
             title="Refresh jobs"
           >
             🔄
@@ -56,19 +56,22 @@ const Sidebar = ({ jobs, selectedJobId, onSelectJob, onNewJob, onRefreshJobs }) 
       </div>
 
       {/* Jobs List */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto p-4">
         {jobs.length === 0 ? (
-          <div className="p-4 text-center">
-            <p className="text-gray-500 mb-4">No jobs yet</p>
-            <button
-              onClick={onNewJob}
-              className="btn-secondary text-sm"
-            >
-              Create First Job
-            </button>
+          <div className="text-center py-8">
+            <div className="bg-white rounded-2xl border-3 border-gray-300 p-8 shadow-xl">
+              <div className="text-6xl mb-4">🧪</div>
+              <p className="text-gray-600 mb-6 font-semibold text-lg">No jobs yet</p>
+              <button
+                onClick={onNewJob}
+                className="btn-secondary"
+              >
+                Create First Job
+              </button>
+            </div>
           </div>
         ) : (
-          <div className="space-y-2 p-2">
+          <div className="space-y-4">
             {jobs.map((job) => {
               const { date, time } = formatDate(job.timestamp)
               const isSelected = selectedJobId === job.job_id
@@ -77,24 +80,24 @@ const Sidebar = ({ jobs, selectedJobId, onSelectJob, onNewJob, onRefreshJobs }) 
                 <div
                   key={job.job_id}
                   onClick={() => onSelectJob(job.job_id)}
-                  className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                  className={`job-item ${
                     isSelected 
-                      ? 'bg-blue-50 border-blue-300' 
-                      : 'bg-white border-gray-200 hover:bg-gray-50'
+                      ? 'job-item-selected' 
+                      : 'job-item-default'
                   }`}
                 >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="font-medium text-gray-800 text-sm truncate flex-1 mr-2">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="font-bold text-gray-800 text-sm flex-1 mr-3 break-words">
                       {job.job_id}
                     </div>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(job.status)}`}>
+                    <span className={`status-badge ${getStatusColor(job.status)}`}>
                       {job.status}
                     </span>
                   </div>
                   
-                  <div className="text-xs text-gray-600 space-y-1">
-                    <div>{getJobSummary(job)}</div>
-                    <div>{date} {time}</div>
+                  <div className="text-sm text-gray-600 space-y-2">
+                    <div className="font-semibold">{getJobSummary(job)}</div>
+                    <div className="text-xs font-medium">{date} at {time}</div>
                   </div>
                 </div>
               )

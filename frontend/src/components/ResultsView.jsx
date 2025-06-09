@@ -39,12 +39,12 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'completed': return 'text-green-600 bg-green-100'
-      case 'running': return 'text-blue-600 bg-blue-100'
-      case 'failed': return 'text-red-600 bg-red-100'
-      case 'timeout': return 'text-orange-600 bg-orange-100'
-      case 'error': return 'text-red-600 bg-red-100'
-      default: return 'text-gray-600 bg-gray-100'
+      case 'completed': return 'text-green-700 bg-green-100 border-green-300'
+      case 'running': return 'text-blue-700 bg-blue-100 border-blue-300'
+      case 'failed': return 'text-red-700 bg-red-100 border-red-300'
+      case 'timeout': return 'text-orange-700 bg-orange-100 border-orange-300'
+      case 'error': return 'text-red-700 bg-red-100 border-red-300'
+      default: return 'text-gray-700 bg-gray-100 border-gray-300'
     }
   }
 
@@ -69,25 +69,25 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
     return (
       <div className="space-y-4">
         {/* Ensemble Results */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h4 className="font-semibold text-blue-800 mb-3">📊 Ensemble Model Results</h4>
+        <div className="section-card bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-300">
+          <h4 className="font-black text-blue-800 mb-4 text-lg">📊 Ensemble Model Results</h4>
           <div className="space-y-3">
             {data.affinity_pred_value !== undefined && (
-              <div className="bg-white rounded p-3">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-medium text-blue-700">Binding Affinity (log IC50):</span>
-                  <span className="text-blue-900 font-mono text-lg">
+              <div className="metric-box">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="font-bold text-blue-700">Binding Affinity (log IC50):</span>
+                  <span className="text-blue-900 font-mono text-xl font-black">
                     {data.affinity_pred_value.toFixed(3)}
                   </span>
                 </div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-medium text-blue-700">pIC50 (kcal/mol):</span>
-                  <span className="text-blue-900 font-mono text-lg">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="font-bold text-blue-700">pIC50 (kcal/mol):</span>
+                  <span className="text-blue-900 font-mono text-xl font-black">
                     {convertToPIC50(data.affinity_pred_value).toFixed(3)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="font-medium text-blue-700">Binding Strength:</span>
+                  <span className="font-bold text-blue-700">Binding Strength:</span>
                   <div className="text-right">
                     <span className={`font-bold ${getAffinityInterpretation(data.affinity_pred_value).color}`}>
                       {getAffinityInterpretation(data.affinity_pred_value).strength}
@@ -173,9 +173,9 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
         )}
 
         {/* Interpretation Guide */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <h4 className="font-semibold text-yellow-800 mb-2">📖 Interpretation Guide</h4>
-          <div className="text-sm text-yellow-700 space-y-1">
+        <div className="interpretation-box">
+          <h4 className="font-black text-yellow-800 mb-4 text-lg">📖 Interpretation Guide</h4>
+          <div className="text-sm text-yellow-700 space-y-2 font-semibold">
             <p><strong>Lower affinity values = stronger binding</strong></p>
             <p>• Strong binders: log(IC50) ≤ -1 (IC50 ≤ 10⁻⁷ M)</p>
             <p>• Moderate binders: log(IC50) ≈ 0 (IC50 ≈ 10⁻⁶ M)</p>
@@ -210,20 +210,20 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
     return (
       <div className="space-y-4">
         {/* Overall Confidence */}
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <h4 className="font-semibold text-green-800 mb-3">🎯 Overall Confidence</h4>
+        <div className="section-card bg-gradient-to-br from-green-50 to-emerald-50 border-green-300">
+          <h4 className="font-black text-green-800 mb-4 text-lg">🎯 Overall Confidence</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {data.confidence_score !== undefined && (
-              <div className="bg-white rounded p-3">
+              <div className="metric-box">
                 <div className="text-center">
-                  <div className="text-sm text-gray-600 mb-1">Confidence Score</div>
-                  <div className={`text-2xl font-bold ${getConfidenceColor(data.confidence_score)}`}>
+                  <div className="metric-label mb-2">Confidence Score</div>
+                  <div className={`metric-value ${getConfidenceColor(data.confidence_score)}`}>
                     {(data.confidence_score * 100).toFixed(1)}%
                   </div>
-                  <div className={`text-sm font-medium ${getConfidenceColor(data.confidence_score)}`}>
+                  <div className={`text-sm font-bold ${getConfidenceColor(data.confidence_score)} mb-2`}>
                     {getConfidenceLevel(data.confidence_score)}
                   </div>
-                  <div className="text-xs text-gray-500 mt-1">
+                  <div className="text-xs text-gray-500 font-semibold">
                     0.8 × pLDDT + 0.2 × ipTM
                   </div>
                 </div>
@@ -348,9 +348,9 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
         )}
 
         {/* Score Interpretation */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <h4 className="font-semibold text-yellow-800 mb-2">📖 Score Interpretation</h4>
-          <div className="text-sm text-yellow-700 space-y-1">
+        <div className="interpretation-box">
+          <h4 className="font-black text-yellow-800 mb-4 text-lg">📖 Score Interpretation</h4>
+          <div className="text-sm text-yellow-700 space-y-2 font-semibold">
             <p><strong>Confidence & TM Scores (0-1):</strong> Higher values = better confidence</p>
             <p><strong>Distance Errors (Ångstroms):</strong> Lower values = better accuracy</p>
             <p><strong>PTM:</strong> Predicted Template Modeling score</p>
@@ -387,80 +387,82 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
   }
 
   return (
-    <div className="flex-1 p-6 overflow-y-auto">
-      <div className="max-w-6xl mx-auto">
+    <div className="flex-1 p-8 overflow-y-auto main-container">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
+        <div className="card-header mb-8">
+          <div className="flex items-center justify-between mb-6">
             <button onClick={onBackToInput} className="btn-secondary">
               ← Back to Input
             </button>
           </div>
           
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+          <h1 className="text-4xl font-black text-gray-800 mb-4">
             Job Results: {jobData.job_id}
           </h1>
         </div>
 
         {/* Job Information */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <div className="card">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">Job Information</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="font-medium text-gray-700">Job ID:</span>
-                <span className="text-gray-900">{jobData.job_id}</span>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
+          <div className="results-section info-section">
+            <h3 className="text-2xl font-black text-gray-800 mb-6">📋 Job Information</h3>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center p-3 bg-white rounded-lg border-2 border-gray-200">
+                <span className="font-bold text-gray-700">Job ID:</span>
+                <span className="text-gray-900 font-mono text-sm">{jobData.job_id}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="font-medium text-gray-700">Status:</span>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(jobData.status)}`}>
+              <div className="flex justify-between items-center p-3 bg-white rounded-lg border-2 border-gray-200">
+                <span className="font-bold text-gray-700">Status:</span>
+                <span className={`status-badge ${getStatusColor(jobData.status)}`}>
                   {jobData.status}
                 </span>
               </div>
-              <div className="flex justify-between">
-                <span className="font-medium text-gray-700">Created:</span>
-                <span className="text-gray-900">{formatDate(jobData.timestamp)}</span>
+              <div className="flex justify-between items-center p-3 bg-white rounded-lg border-2 border-gray-200">
+                <span className="font-bold text-gray-700">Created:</span>
+                <span className="text-gray-900 font-semibold">{formatDate(jobData.timestamp)}</span>
               </div>
               {jobData.completion_time && (
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-700">Completed:</span>
-                  <span className="text-gray-900">{formatDate(jobData.completion_time)}</span>
+                <div className="flex justify-between items-center p-3 bg-white rounded-lg border-2 border-gray-200">
+                  <span className="font-bold text-gray-700">Completed:</span>
+                  <span className="text-gray-900 font-semibold">{formatDate(jobData.completion_time)}</span>
                 </div>
               )}
             </div>
           </div>
 
-          <div className="card">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">Entities</h3>
-            <div className="space-y-3">
+          <div className="results-section info-section">
+            <h3 className="text-2xl font-black text-gray-800 mb-6">🧬 Entities</h3>
+            <div className="space-y-4">
               {(jobData.entities || []).map((entity, index) => (
-                <div key={index} className="border-b border-gray-200 pb-3 last:border-b-0">
-                  <div className="flex justify-between mb-2">
-                    <span className="font-medium text-gray-700">Type:</span>
-                    <span className="text-gray-900 capitalize">{entity.type}</span>
-                  </div>
-                  <div className="flex justify-between mb-2">
-                    <span className="font-medium text-gray-700">ID:</span>
-                    <span className="text-gray-900">{entity.id}</span>
-                  </div>
-                  {entity.sequence_length && (
-                    <div className="flex justify-between mb-2">
-                      <span className="font-medium text-gray-700">Length:</span>
-                      <span className="text-gray-900">{entity.sequence_length} residues</span>
-                    </div>
-                  )}
-                  {entity.smiles && (
-                    <div className="flex justify-between mb-2">
-                      <span className="font-medium text-gray-700">SMILES:</span>
-                      <span className="text-gray-900 font-mono text-sm break-all">{entity.smiles}</span>
-                    </div>
-                  )}
-                  {entity.ccd && (
+                <div key={index} className="bg-white rounded-xl border-2 border-gray-200 p-4 shadow-lg">
+                  <div className="grid grid-cols-2 gap-3">
                     <div className="flex justify-between">
-                      <span className="font-medium text-gray-700">CCD:</span>
-                      <span className="text-gray-900">{entity.ccd}</span>
+                      <span className="font-bold text-gray-700">Type:</span>
+                      <span className="text-gray-900 capitalize font-semibold">{entity.type}</span>
                     </div>
-                  )}
+                    <div className="flex justify-between">
+                      <span className="font-bold text-gray-700">ID:</span>
+                      <span className="text-gray-900 font-mono text-sm">{entity.id}</span>
+                    </div>
+                    {entity.sequence_length && (
+                      <div className="flex justify-between col-span-2">
+                        <span className="font-bold text-gray-700">Length:</span>
+                        <span className="text-gray-900 font-semibold">{entity.sequence_length} residues</span>
+                      </div>
+                    )}
+                    {entity.smiles && (
+                      <div className="flex justify-between col-span-2">
+                        <span className="font-bold text-gray-700">SMILES:</span>
+                        <span className="text-gray-900 font-mono text-xs break-all">{entity.smiles}</span>
+                      </div>
+                    )}
+                    {entity.ccd && (
+                      <div className="flex justify-between col-span-2">
+                        <span className="font-bold text-gray-700">CCD:</span>
+                        <span className="text-gray-900 font-semibold">{entity.ccd}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -470,16 +472,19 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
         {/* 3D Structure Viewer */}
         {jobData.status === 'completed' && (
           <div className="mb-8">
-            <MolstarViewer jobId={jobId} className="w-full" />
+            <div className="results-section from-slate-50 to-gray-50 border-gray-300">
+              <h3 className="text-2xl font-black text-gray-800 mb-6">🔬 3D Structure</h3>
+              <MolstarViewer jobId={jobId} className="w-full rounded-xl border-3 border-gray-300 shadow-xl" />
+            </div>
           </div>
         )}
 
         {/* Results */}
         {jobData.status === 'completed' && resultsData && (resultsData.affinity || resultsData.confidence) && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
             {resultsData.affinity && (
-              <div className="card">
-                <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+              <div className="results-section affinity-section">
+                <h3 className="text-2xl font-black text-gray-800 mb-6 flex items-center">
                   🎯 Affinity Results
                 </h3>
                 {renderAffinityResults(resultsData.affinity)}
@@ -487,8 +492,8 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
             )}
 
             {resultsData.confidence && (
-              <div className="card">
-                <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+              <div className="results-section confidence-section">
+                <h3 className="text-2xl font-black text-gray-800 mb-6 flex items-center">
                   📊 Confidence Results
                 </h3>
                 {renderConfidenceResults(resultsData.confidence)}
@@ -499,13 +504,13 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
 
         {/* Error Information */}
         {(jobData.status === 'failed' || jobData.status === 'error') && (
-          <div className="card border-red-200 bg-red-50">
-            <h3 className="text-xl font-semibold text-red-800 mb-4">Error Information</h3>
+          <div className="results-section from-red-50 to-pink-50 border-red-300">
+            <h3 className="text-2xl font-black text-red-800 mb-6">❌ Error Information</h3>
             
             {jobData.stderr && (
-              <div className="mb-4">
-                <h4 className="font-medium text-red-700 mb-2">Error Output:</h4>
-                <pre className="bg-red-100 p-3 rounded text-sm text-red-800 overflow-x-auto">
+              <div className="mb-6">
+                <h4 className="font-bold text-red-700 mb-3 text-lg">Error Output:</h4>
+                <pre className="bg-red-100 p-4 rounded-xl text-sm text-red-800 overflow-x-auto border-2 border-red-200 shadow-lg">
                   {jobData.stderr}
                 </pre>
               </div>
@@ -513,8 +518,8 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
             
             {jobData.stdout && (
               <div className="mb-4">
-                <h4 className="font-medium text-red-700 mb-2">Standard Output:</h4>
-                <pre className="bg-red-100 p-3 rounded text-sm text-red-800 overflow-x-auto">
+                <h4 className="font-bold text-red-700 mb-3 text-lg">Standard Output:</h4>
+                <pre className="bg-red-100 p-4 rounded-xl text-sm text-red-800 overflow-x-auto border-2 border-red-200 shadow-lg">
                   {jobData.stdout}
                 </pre>
               </div>

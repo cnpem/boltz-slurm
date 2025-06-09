@@ -4,34 +4,98 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors;
+    @apply bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl border-2 border-blue-700 hover:border-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl;
   }
   
   .btn-secondary {
-    @apply bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition-colors;
+    @apply bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-xl border-2 border-gray-700 hover:border-gray-800 transition-all duration-200 shadow-lg hover:shadow-xl;
   }
   
   .btn-submit {
-    @apply bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors text-lg;
+    @apply bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-8 rounded-xl border-3 border-green-700 hover:border-green-800 transition-all duration-200 text-lg shadow-xl hover:shadow-2xl;
   }
   
   .form-input {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+    @apply w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-200 focus:border-blue-500 transition-all duration-200 bg-white shadow-sm;
   }
   
   .form-textarea {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[100px];
+    @apply w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-200 focus:border-blue-500 transition-all duration-200 min-h-[120px] bg-white shadow-sm;
   }
   
   .form-select {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+    @apply w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-200 focus:border-blue-500 transition-all duration-200 bg-white shadow-sm;
   }
   
   .card {
-    @apply bg-white rounded-lg shadow-md p-6;
+    @apply bg-white rounded-2xl shadow-xl border-2 border-gray-200 p-8 hover:shadow-2xl transition-all duration-200;
+  }
+  
+  .card-header {
+    @apply bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border-2 border-blue-200 p-6 mb-6;
+  }
+  
+  .section-card {
+    @apply bg-white rounded-xl border-3 border-gray-300 p-6 shadow-lg hover:shadow-xl transition-all duration-200;
+  }
+  
+  .status-badge {
+    @apply px-3 py-1 rounded-full text-sm font-bold border-2 shadow-sm;
+  }
+  
+  .job-item {
+    @apply p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 shadow-md hover:shadow-lg;
+  }
+  
+  .job-item-selected {
+    @apply bg-blue-50 border-blue-400 shadow-lg;
+  }
+  
+  .job-item-default {
+    @apply bg-white border-gray-300 hover:bg-gray-50 hover:border-gray-400;
+  }
+  
+  .sidebar-container {
+    @apply bg-gradient-to-b from-slate-50 to-gray-100 shadow-2xl border-r-4 border-gray-300;
+  }
+  
+  .main-container {
+    @apply bg-gradient-to-br from-gray-50 to-slate-100 min-h-screen;
   }
   
   .spinner {
-    @apply animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600;
+    @apply animate-spin rounded-full h-20 w-20 border-4 border-blue-200 border-t-blue-600 shadow-lg;
+  }
+  
+  .metric-box {
+    @apply bg-white rounded-xl border-3 border-gray-300 p-6 text-center shadow-lg hover:shadow-xl transition-all duration-200;
+  }
+  
+  .metric-value {
+    @apply text-3xl font-black mb-2;
+  }
+  
+  .metric-label {
+    @apply text-sm font-semibold text-gray-600 uppercase tracking-wide;
+  }
+  
+  .results-section {
+    @apply bg-gradient-to-br rounded-2xl border-3 p-8 shadow-xl hover:shadow-2xl transition-all duration-200;
+  }
+  
+  .affinity-section {
+    @apply from-blue-50 to-cyan-50 border-blue-300;
+  }
+  
+  .confidence-section {
+    @apply from-green-50 to-emerald-50 border-green-300;
+  }
+  
+  .info-section {
+    @apply from-purple-50 to-pink-50 border-purple-300;
+  }
+  
+  .interpretation-box {
+    @apply bg-yellow-50 border-3 border-yellow-300 rounded-xl p-6 shadow-lg;
   }
 }
