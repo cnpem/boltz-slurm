@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, Request, UploadFile, File, Form
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import yaml
@@ -392,6 +392,8 @@ async def predict_boltz(request: BoltzRequest):
         if not has_msa_files:
             cmd.append("--use_msa_server")
         
+        cmd.extend(["--output_format", "pdb"])
+
         job_info["command"] = " ".join(cmd)
         logger.info(f"Running command for job {job_id}: {' '.join(cmd)}")
         
@@ -583,3 +585,38 @@ def format_confidence_results(data):
             formatted["summary"]["confidence_score"] = conf_data
     
     return formatted
+
+@app.get("/api/jobs/{job_id}/pdb")
+async def get_job_pdb(job_id: str):
+    """Get the PDB file for a specific job"""
+    job_path = jobs_dir / job_id
+    if not job_path.exists():
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    # Look for PDB files in multiple possible locations
+    possible_paths = [
+        job_path / "boltz_output" / "boltz_input.pdb",
+        job_path / "boltz_output" / "boltz_results_boltz_input" / "predictions" / "boltz_input" / "boltz_input.pdb",
+        job_path / "boltz_output" / "boltz_results_boltz_input" / "predictions" / "boltz_input" / "boltz_input_model_0.pdb",
+        job_path / "boltz_output" / "boltz_input_model_0.pdb"
+    ]
+    # Also check for any .pdb files in the output directory
+    output_dir = job_path / "boltz_output"
+    if output_dir.exists():
+        for pdb_file in output_dir.rglob("*.pdb"):
+            possible_paths.append(pdb_file)
+    
+    pdb_file_path = None
+    for path in possible_paths:
+        if path.exists():
+            pdb_file_path = path
+            break
+    
+    if not pdb_file_path:
+        raise HTTPException(status_code=404, detail="PDB file not found")
+    
+    return FileResponse(
+        pdb_file_path, 
+        media_type="chemical/x-pdb",
+        filename=f"{job_id}.pdb"
+    )

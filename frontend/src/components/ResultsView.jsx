@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import MolstarViewer from './MolstarViewer'
 
 const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
   const [jobData, setJobData] = useState(null)
@@ -426,12 +427,6 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
                   <span className="text-gray-900">{formatDate(jobData.completion_time)}</span>
                 </div>
               )}
-              <div className="flex justify-between">
-                <span className="font-medium text-gray-700">Command:</span>
-                <code className="text-sm bg-gray-100 px-2 py-1 rounded">
-                  {jobData.command || 'N/A'}
-                </code>
-              </div>
             </div>
           </div>
 
@@ -471,6 +466,13 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
             </div>
           </div>
         </div>
+
+        {/* 3D Structure Viewer */}
+        {jobData.status === 'completed' && (
+          <div className="mb-8">
+            <MolstarViewer jobId={jobId} className="w-full" />
+          </div>
+        )}
 
         {/* Results */}
         {jobData.status === 'completed' && resultsData && (resultsData.affinity || resultsData.confidence) && (
