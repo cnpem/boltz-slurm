@@ -1,4 +1,4 @@
-# Boltz Frontend
+# Boltz-GUI Frontend
 
 React frontend for the Boltz-GUI.
 
@@ -12,5 +12,5 @@ npm install
 npm run dev
 ```
 
-The development server will start on http://localhost:6868 and proxy API requests to the FastAPI backend on port 6969.
+The development server will start on http://localhost:6868 and proxy API requests to the FastAPI backend on port 6969. This should be enough for local use.
 
