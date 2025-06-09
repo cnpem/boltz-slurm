@@ -172,19 +172,29 @@ async def get_job_file(job_id: str, filename: str):
     if not job_path.exists():
         raise HTTPException(status_code=404, detail="Job not found")
     
-    # Only allow specific result files for security
-    allowed_files = ["affinity_boltz_input.json", "confidence_boltz_input_model_0.json"]
+    # Allow specific result files for security
+    allowed_files = [
+        "affinity_boltz_input.json", 
+        "confidence_boltz_input_model_0.json",
+        "boltz_input.yaml"
+    ]
     if filename not in allowed_files:
         raise HTTPException(status_code=403, detail="File not allowed")
     
-    # Look for the file in the output directory first, then job directory
-    output_dir = job_path / "boltz_output"
-    file_path = output_dir / filename
+    # Look for the file in multiple possible locations
+    possible_paths = [
+        job_path / "boltz_output" / filename,
+        job_path / "boltz_output" / "boltz_results_boltz_input" / "predictions" / "boltz_input" / filename,
+        job_path / filename
+    ]
     
-    if not file_path.exists():
-        file_path = job_path / filename
+    file_path = None
+    for path in possible_paths:
+        if path.exists():
+            file_path = path
+            break
     
-    if not file_path.exists():
+    if not file_path:
         raise HTTPException(status_code=404, detail="File not found")
     
     try:
@@ -198,6 +208,31 @@ async def upload_msa(file: UploadFile = File(...)):
     """Upload an MSA file and return the path"""
     if not file.filename.endswith('.a3m'):
         raise HTTPException(status_code=400, detail="Only .a3m files are allowed")
+    
+    # Create a temporary uploads directory if it doesn't exist
+    uploads_dir = Path("uploads")
+    uploads_dir.mkdir(exist_ok=True)
+    
+    # Generate a unique filename
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    unique_filename = f"{timestamp}_{file.filename}"
+    file_path = uploads_dir / unique_filename
+    
+    # Save the uploaded file
+    try:
+        with open(file_path, "wb") as buffer:
+            content = await file.read()
+            buffer.write(content)
+        
+        return {"filename": unique_filename, "path": str(file_path)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save file: {str(e)}")
+
+@app.post("/upload_template")
+async def upload_template(file: UploadFile = File(...)):
+    """Upload a template CIF file and return the path"""
+    if not (file.filename.endswith('.cif') or file.filename.endswith('.pdb')):
+        raise HTTPException(status_code=400, detail="Only .cif and .pdb files are allowed")
     
     # Create a temporary uploads directory if it doesn't exist
     uploads_dir = Path("uploads")
@@ -444,3 +479,107 @@ async def predict_boltz(request: BoltzRequest):
 async def health_check():
     """Health check endpoint"""
     return {"status": "healthy"}
+
+@app.get("/api/jobs/{job_id}/results")
+async def get_job_results(job_id: str):
+    """Get formatted prediction results for a job"""
+    job_path = jobs_dir / job_id
+    if not job_path.exists():
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    # Load job info first
+    job_info = load_job_info(job_path)
+    if not job_info:
+        raise HTTPException(status_code=404, detail="Job info not found")
+    
+    results = {
+        "job_info": job_info,
+        "affinity_results": None,
+        "confidence_results": None
+    }
+    
+    # Look for affinity results
+    affinity_paths = [
+        job_path / "boltz_output" / "affinity_boltz_input.json",
+        job_path / "boltz_output" / "boltz_results_boltz_input" / "predictions" / "boltz_input" / "affinity_boltz_input.json"
+    ]
+    
+    for path in affinity_paths:
+        if path.exists():
+            try:
+                with open(path, 'r') as f:
+                    affinity_data = json.load(f)
+                    results["affinity_results"] = format_affinity_results(affinity_data)
+                break
+            except Exception as e:
+                logger.warning(f"Failed to load affinity results from {path}: {e}")
+    
+    # Look for confidence results
+    confidence_paths = [
+        job_path / "boltz_output" / "confidence_boltz_input_model_0.json",
+        job_path / "boltz_output" / "boltz_results_boltz_input" / "predictions" / "boltz_input" / "confidence_boltz_input_model_0.json"
+    ]
+    
+    for path in confidence_paths:
+        if path.exists():
+            try:
+                with open(path, 'r') as f:
+                    confidence_data = json.load(f)
+                    results["confidence_results"] = format_confidence_results(confidence_data)
+                break
+            except Exception as e:
+                logger.warning(f"Failed to load confidence results from {path}: {e}")
+    
+    return results
+
+def format_affinity_results(data):
+    """Format affinity results for display"""
+    if not data or not isinstance(data, dict):
+        return None
+    
+    formatted = {
+        "summary": {},
+        "detailed": data
+    }
+    
+    # Extract key metrics if available
+    if "affinity" in data:
+        formatted["summary"]["binding_affinity"] = data["affinity"]
+    
+    if "affinity_confidence" in data:
+        formatted["summary"]["confidence"] = data["affinity_confidence"]
+        
+    if "units" in data:
+        formatted["summary"]["units"] = data["units"]
+    
+    return formatted
+
+def format_confidence_results(data):
+    """Format confidence results for display"""
+    if not data or not isinstance(data, dict):
+        return None
+    
+    formatted = {
+        "summary": {},
+        "detailed": data
+    }
+    
+    # Extract key confidence metrics
+    if "confidence" in data:
+        conf_data = data["confidence"]
+        if isinstance(conf_data, dict):
+            # Get overall confidence if available
+            if "overall" in conf_data:
+                formatted["summary"]["overall_confidence"] = conf_data["overall"]
+            
+            # Get per-residue confidence statistics
+            if "per_residue" in conf_data:
+                per_res = conf_data["per_residue"]
+                if isinstance(per_res, list) and per_res:
+                    formatted["summary"]["mean_confidence"] = sum(per_res) / len(per_res)
+                    formatted["summary"]["min_confidence"] = min(per_res)
+                    formatted["summary"]["max_confidence"] = max(per_res)
+        else:
+            formatted["summary"]["confidence_score"] = conf_data
+    
+    return formatted

@@ -36,6 +36,14 @@ function App() {
     }
   }
 
+  const handleJobCompleted = (jobId) => {
+    // When a job completes in LoadingView, switch to results view
+    setSelectedJobId(jobId)
+    setCurrentView('results')
+    // Also refresh the jobs list
+    loadJobs()
+  }
+
   return (
     <div className="min-h-screen bg-gray-100 flex">
       {/* Sidebar */}
@@ -70,6 +78,7 @@ function App() {
               loadJobs()
               setCurrentView('input')
             }}
+            onJobCompleted={handleJobCompleted}
           />
         )}
       </div>

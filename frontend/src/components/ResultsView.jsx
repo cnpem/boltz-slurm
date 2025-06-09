@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react'
 
 const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
   const [jobData, setJobData] = useState(null)
-  const [affinityData, setAffinityData] = useState(null)
-  const [confidenceData, setConfidenceData] = useState(null)
+  const [resultsData, setResultsData] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -16,38 +15,21 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
     try {
       setLoading(true)
       
-      // Load job info
-      const response = await fetch(`/api/jobs/${jobId}`)
+      // Load formatted results using the new endpoint
+      const response = await fetch(`/api/jobs/${jobId}/results`)
       const data = await response.json()
-      setJobData(data)
+      
+      setJobData(data.job_info)
+      setResultsData({
+        affinity: data.affinity_results,
+        confidence: data.confidence_results
+      })
 
-      // Load result files if job completed
-      if (data.status === 'completed') {
-        const [affinityResult, confidenceResult] = await Promise.all([
-          loadJobFile(jobId, 'affinity_boltz_input.json'),
-          loadJobFile(jobId, 'confidence_boltz_input_model_0.json')
-        ])
-        
-        setAffinityData(affinityResult)
-        setConfidenceData(confidenceResult)
-      }
     } catch (error) {
       console.error('Failed to load job details:', error)
     } finally {
       setLoading(false)
     }
-  }
-
-  const loadJobFile = async (jobId, filename) => {
-    try {
-      const response = await fetch(`/api/jobs/${jobId}/file/${filename}`)
-      if (response.ok) {
-        return await response.json()
-      }
-    } catch (error) {
-      console.error(`Failed to load ${filename}:`, error)
-    }
-    return null
   }
 
   const formatDate = (dateString) => {
@@ -65,36 +47,316 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
     }
   }
 
-  const formatAffinityResults = (data) => {
-    if (!data || !data.affinity) return null
+  const convertToPIC50 = (modelOutput) => {
+    // Convert model output to pIC50 in kcal/mol using formula: (6 - y) * 1.364
+    return (6 - modelOutput) * 1.364
+  }
+
+  const getAffinityInterpretation = (modelOutput) => {
+    if (modelOutput <= -2) return { strength: "Very Strong", color: "text-green-700", description: "IC50 < 10⁻⁸ M" }
+    if (modelOutput <= -1) return { strength: "Strong", color: "text-green-600", description: "IC50 ≈ 10⁻⁹ M" }
+    if (modelOutput <= 0) return { strength: "Moderate", color: "text-yellow-600", description: "IC50 ≈ 10⁻⁶ M" }
+    if (modelOutput <= 2) return { strength: "Weak", color: "text-orange-600", description: "IC50 ≈ 10⁻⁴ M" }
+    return { strength: "Very Weak/Decoy", color: "text-red-600", description: "IC50 > 10⁻⁴ M" }
+  }
+
+  const renderAffinityResults = (affinityData) => {
+    if (!affinityData || !affinityData.detailed) return null
+
+    const data = affinityData.detailed
 
     return (
-      <div className="space-y-2">
-        {Object.entries(data.affinity).map(([key, value]) => (
-          <div key={key} className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
-            <span className="font-medium text-gray-700">{key.replace(/_/g, ' ').toUpperCase()}:</span>
-            <span className="text-gray-900">
-              {typeof value === 'number' ? value.toFixed(4) : value}
-            </span>
+      <div className="space-y-4">
+        {/* Ensemble Results */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <h4 className="font-semibold text-blue-800 mb-3">📊 Ensemble Model Results</h4>
+          <div className="space-y-3">
+            {data.affinity_pred_value !== undefined && (
+              <div className="bg-white rounded p-3">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="font-medium text-blue-700">Binding Affinity (log IC50):</span>
+                  <span className="text-blue-900 font-mono text-lg">
+                    {data.affinity_pred_value.toFixed(3)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="font-medium text-blue-700">pIC50 (kcal/mol):</span>
+                  <span className="text-blue-900 font-mono text-lg">
+                    {convertToPIC50(data.affinity_pred_value).toFixed(3)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="font-medium text-blue-700">Binding Strength:</span>
+                  <div className="text-right">
+                    <span className={`font-bold ${getAffinityInterpretation(data.affinity_pred_value).color}`}>
+                      {getAffinityInterpretation(data.affinity_pred_value).strength}
+                    </span>
+                    <div className="text-sm text-gray-600">
+                      {getAffinityInterpretation(data.affinity_pred_value).description}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {data.affinity_probability_binary !== undefined && (
+              <div className="bg-white rounded p-3">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium text-blue-700">Binding Probability:</span>
+                  <div className="text-right">
+                    <span className="text-blue-900 font-mono text-lg">
+                      {(data.affinity_probability_binary * 100).toFixed(1)}%
+                    </span>
+                    <div className="text-sm text-gray-600">
+                      Likelihood of being a binder
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        ))}
+        </div>
+
+        {/* Individual Model Results */}
+        {(data.affinity_pred_value1 !== undefined || data.affinity_pred_value2 !== undefined) && (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <h4 className="font-semibold text-gray-800 mb-3">🔬 Individual Model Results</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Model 1 */}
+              {data.affinity_pred_value1 !== undefined && (
+                <div className="bg-white rounded p-3">
+                  <h5 className="font-medium text-gray-700 mb-2">Model 1</h5>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>Affinity (log IC50):</span>
+                      <span className="font-mono">{data.affinity_pred_value1.toFixed(3)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>pIC50 (kcal/mol):</span>
+                      <span className="font-mono">{convertToPIC50(data.affinity_pred_value1).toFixed(3)}</span>
+                    </div>
+                    {data.affinity_probability_binary1 !== undefined && (
+                      <div className="flex justify-between">
+                        <span>Binding Probability:</span>
+                        <span className="font-mono">{(data.affinity_probability_binary1 * 100).toFixed(1)}%</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Model 2 */}
+              {data.affinity_pred_value2 !== undefined && (
+                <div className="bg-white rounded p-3">
+                  <h5 className="font-medium text-gray-700 mb-2">Model 2</h5>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>Affinity (log IC50):</span>
+                      <span className="font-mono">{data.affinity_pred_value2.toFixed(3)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>pIC50 (kcal/mol):</span>
+                      <span className="font-mono">{convertToPIC50(data.affinity_pred_value2).toFixed(3)}</span>
+                    </div>
+                    {data.affinity_probability_binary2 !== undefined && (
+                      <div className="flex justify-between">
+                        <span>Binding Probability:</span>
+                        <span className="font-mono">{(data.affinity_probability_binary2 * 100).toFixed(1)}%</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Interpretation Guide */}
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <h4 className="font-semibold text-yellow-800 mb-2">📖 Interpretation Guide</h4>
+          <div className="text-sm text-yellow-700 space-y-1">
+            <p><strong>Lower affinity values = stronger binding</strong></p>
+            <p>• Strong binders: log(IC50) ≤ -1 (IC50 ≤ 10⁻⁷ M)</p>
+            <p>• Moderate binders: log(IC50) ≈ 0 (IC50 ≈ 10⁻⁶ M)</p>
+            <p>• Weak binders: log(IC50) ≥ 2 (IC50 ≥ 10⁻⁴ M)</p>
+          </div>
+        </div>
       </div>
     )
   }
 
-  const formatConfidenceResults = (data) => {
-    if (!data || !data.confidence) return null
+  const getConfidenceColor = (score) => {
+    if (score >= 0.9) return "text-green-700"
+    if (score >= 0.8) return "text-green-600"
+    if (score >= 0.7) return "text-yellow-600"
+    if (score >= 0.6) return "text-orange-600"
+    return "text-red-600"
+  }
+
+  const getConfidenceLevel = (score) => {
+    if (score >= 0.9) return "Very High"
+    if (score >= 0.8) return "High"
+    if (score >= 0.7) return "Moderate"
+    if (score >= 0.6) return "Low"
+    return "Very Low"
+  }
+
+  const renderConfidenceResults = (confidenceData) => {
+    if (!confidenceData || !confidenceData.detailed) return null
+
+    const data = confidenceData.detailed
 
     return (
-      <div className="space-y-2">
-        {Object.entries(data.confidence).map(([key, value]) => (
-          <div key={key} className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
-            <span className="font-medium text-gray-700">{key.replace(/_/g, ' ').toUpperCase()}:</span>
-            <span className="text-gray-900">
-              {typeof value === 'number' ? value.toFixed(4) : value}
-            </span>
+      <div className="space-y-4">
+        {/* Overall Confidence */}
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <h4 className="font-semibold text-green-800 mb-3">🎯 Overall Confidence</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {data.confidence_score !== undefined && (
+              <div className="bg-white rounded p-3">
+                <div className="text-center">
+                  <div className="text-sm text-gray-600 mb-1">Confidence Score</div>
+                  <div className={`text-2xl font-bold ${getConfidenceColor(data.confidence_score)}`}>
+                    {(data.confidence_score * 100).toFixed(1)}%
+                  </div>
+                  <div className={`text-sm font-medium ${getConfidenceColor(data.confidence_score)}`}>
+                    {getConfidenceLevel(data.confidence_score)}
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    0.8 × pLDDT + 0.2 × ipTM
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {data.complex_plddt !== undefined && (
+              <div className="bg-white rounded p-3">
+                <div className="text-center">
+                  <div className="text-sm text-gray-600 mb-1">Complex pLDDT</div>
+                  <div className={`text-2xl font-bold ${getConfidenceColor(data.complex_plddt)}`}>
+                    {(data.complex_plddt * 100).toFixed(1)}%
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    Average confidence across complex
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        ))}
+        </div>
+
+        {/* TM Scores */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <h4 className="font-semibold text-blue-800 mb-3">📐 Template Modeling (TM) Scores</h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {data.ptm !== undefined && (
+              <div className="bg-white rounded p-3 text-center">
+                <div className="text-sm text-gray-600">PTM (Complex)</div>
+                <div className={`text-lg font-bold ${getConfidenceColor(data.ptm)}`}>
+                  {(data.ptm * 100).toFixed(1)}%
+                </div>
+              </div>
+            )}
+            {data.iptm !== undefined && (
+              <div className="bg-white rounded p-3 text-center">
+                <div className="text-sm text-gray-600">ipTM (Interface)</div>
+                <div className={`text-lg font-bold ${getConfidenceColor(data.iptm)}`}>
+                  {(data.iptm * 100).toFixed(1)}%
+                </div>
+              </div>
+            )}
+            {data.protein_iptm !== undefined && (
+              <div className="bg-white rounded p-3 text-center">
+                <div className="text-sm text-gray-600">Protein ipTM</div>
+                <div className={`text-lg font-bold ${getConfidenceColor(data.protein_iptm)}`}>
+                  {(data.protein_iptm * 100).toFixed(1)}%
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Distance Errors */}
+        {(data.complex_pde !== undefined || data.complex_ipde !== undefined) && (
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+            <h4 className="font-semibold text-purple-800 mb-3">📏 Distance Errors (Lower = Better)</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {data.complex_pde !== undefined && (
+                <div className="bg-white rounded p-3 text-center">
+                  <div className="text-sm text-gray-600">Complex PDE</div>
+                  <div className="text-lg font-bold text-purple-700">
+                    {data.complex_pde.toFixed(2)} Å
+                  </div>
+                  <div className="text-xs text-gray-500">Average distance error</div>
+                </div>
+              )}
+              {data.complex_ipde !== undefined && (
+                <div className="bg-white rounded p-3 text-center">
+                  <div className="text-sm text-gray-600">Interface PDE</div>
+                  <div className="text-lg font-bold text-purple-700">
+                    {data.complex_ipde.toFixed(2)} Å
+                  </div>
+                  <div className="text-xs text-gray-500">Interface distance error</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Chain-wise Results */}
+        {(data.chains_ptm || data.pair_chains_iptm) && (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <h4 className="font-semibold text-gray-800 mb-3">🔗 Chain-wise Analysis</h4>
+            
+            {data.chains_ptm && (
+              <div className="mb-4">
+                <h5 className="font-medium text-gray-700 mb-2">Individual Chain PTM</h5>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {Object.entries(data.chains_ptm).map(([chain, score]) => (
+                    <div key={chain} className="bg-white rounded p-2 text-center">
+                      <div className="text-xs text-gray-600">Chain {chain}</div>
+                      <div className={`font-bold ${getConfidenceColor(score)}`}>
+                        {(score * 100).toFixed(1)}%
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {data.pair_chains_iptm && (
+              <div>
+                <h5 className="font-medium text-gray-700 mb-2">Pairwise Chain ipTM</h5>
+                <div className="bg-white rounded p-3">
+                  <div className="grid gap-2">
+                    {Object.entries(data.pair_chains_iptm).map(([chain1, pairs]) => 
+                      Object.entries(pairs).map(([chain2, score]) => (
+                        <div key={`${chain1}-${chain2}`} className="flex justify-between items-center text-sm">
+                          <span className="text-gray-600">Chain {chain1} ↔ Chain {chain2}:</span>
+                          <span className={`font-mono ${getConfidenceColor(score)}`}>
+                            {(score * 100).toFixed(1)}%
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Score Interpretation */}
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <h4 className="font-semibold text-yellow-800 mb-2">📖 Score Interpretation</h4>
+          <div className="text-sm text-yellow-700 space-y-1">
+            <p><strong>Confidence & TM Scores (0-1):</strong> Higher values = better confidence</p>
+            <p><strong>Distance Errors (Ångstroms):</strong> Lower values = better accuracy</p>
+            <p><strong>PTM:</strong> Predicted Template Modeling score</p>
+            <p><strong>ipTM:</strong> Interface PTM score (quality of interfaces)</p>
+            <p><strong>pLDDT:</strong> Predicted Local Distance Difference Test</p>
+          </div>
+        </div>
       </div>
     )
   }
@@ -129,14 +391,9 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-4">
-              <button onClick={onBackToInput} className="btn-secondary">
-                ← Back to Input
-              </button>
-              <button onClick={onNewJob} className="btn-primary">
-                + New Job
-              </button>
-            </div>
+            <button onClick={onBackToInput} className="btn-secondary">
+              ← Back to Input
+            </button>
           </div>
           
           <h1 className="text-3xl font-bold text-gray-800 mb-2">
@@ -200,7 +457,7 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
                   {entity.smiles && (
                     <div className="flex justify-between mb-2">
                       <span className="font-medium text-gray-700">SMILES:</span>
-                      <span className="text-gray-900 font-mono text-sm">{entity.smiles}</span>
+                      <span className="text-gray-900 font-mono text-sm break-all">{entity.smiles}</span>
                     </div>
                   )}
                   {entity.ccd && (
@@ -216,23 +473,23 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
         </div>
 
         {/* Results */}
-        {jobData.status === 'completed' && (affinityData || confidenceData) && (
+        {jobData.status === 'completed' && resultsData && (resultsData.affinity || resultsData.confidence) && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {affinityData && (
+            {resultsData.affinity && (
               <div className="card">
                 <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
                   🎯 Affinity Results
                 </h3>
-                {formatAffinityResults(affinityData)}
+                {renderAffinityResults(resultsData.affinity)}
               </div>
             )}
 
-            {confidenceData && (
+            {resultsData.confidence && (
               <div className="card">
                 <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
                   📊 Confidence Results
                 </h3>
-                {formatConfidenceResults(confidenceData)}
+                {renderConfidenceResults(resultsData.confidence)}
               </div>
             )}
           </div>

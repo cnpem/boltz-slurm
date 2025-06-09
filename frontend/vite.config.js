@@ -10,6 +10,7 @@ export default defineConfig({
       '/api': 'http://localhost:6969',
       '/predict': 'http://localhost:6969',
       '/upload_msa': 'http://localhost:6969',
+      '/upload_template': 'http://localhost:6969',
       '/health': 'http://localhost:6969'
     }
   }

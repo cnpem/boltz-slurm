@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import SequenceInput from './SequenceInput'
+import ConstraintInput from './ConstraintInput'
+import TemplateInput from './TemplateInput'
 
 const InputView = ({ onJobSubmitted, onShowLoading }) => {
   const [sequences, setSequences] = useState([])
@@ -72,6 +74,48 @@ const InputView = ({ onJobSubmitted, onShowLoading }) => {
     setSequences(prev => prev.filter(seq => seq.id !== id))
   }
 
+  const addConstraint = (type) => {
+    const newConstraint = {
+      id: Date.now().toString(),
+      type: type,
+      // Initialize fields based on type
+      ...(type === 'bond' && { atom1: '', atom2: '' }),
+      ...(type === 'pocket' && { binder: '', contacts: '', max_distance: null }),
+      ...(type === 'contact' && { token1: '', token2: '', max_distance: null })
+    }
+    setConstraints(prev => [...prev, newConstraint])
+  }
+
+  const updateConstraint = (id, updates) => {
+    setConstraints(prev => prev.map(constraint => 
+      constraint.id === id ? { ...constraint, ...updates } : constraint
+    ))
+  }
+
+  const removeConstraint = (id) => {
+    setConstraints(prev => prev.filter(constraint => constraint.id !== id))
+  }
+
+  const addTemplate = () => {
+    const newTemplate = {
+      id: Date.now().toString(),
+      cif: '',
+      chain_id: '',
+      template_id: ''
+    }
+    setTemplates(prev => [...prev, newTemplate])
+  }
+
+  const updateTemplate = (id, updates) => {
+    setTemplates(prev => prev.map(template => 
+      template.id === id ? { ...template, ...updates } : template
+    ))
+  }
+
+  const removeTemplate = (id) => {
+    setTemplates(prev => prev.filter(template => template.id !== id))
+  }
+
   const getDefaultChainId = () => {
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     return letters[sequences.length] || 'A'
@@ -105,6 +149,60 @@ const InputView = ({ onJobSubmitted, onShowLoading }) => {
     return true
   }
 
+  const processConstraintsForSubmission = () => {
+    return constraints.map(constraint => {
+      const result = {}
+      
+      if (constraint.type === 'bond') {
+        result.bond = {
+          atom1: constraint.atom1.split(',').map(s => s.trim()),
+          atom2: constraint.atom2.split(',').map(s => s.trim())
+        }
+      } else if (constraint.type === 'pocket') {
+        const contacts = constraint.contacts.split('\n')
+          .map(line => line.trim())
+          .filter(line => line)
+          .map(line => line.split(',').map(s => s.trim()))
+        
+        result.pocket = {
+          binder: constraint.binder,
+          contacts: contacts
+        }
+        
+        if (constraint.max_distance) {
+          result.pocket.max_distance = constraint.max_distance
+        }
+      } else if (constraint.type === 'contact') {
+        result.contact = {
+          token1: constraint.token1.split(',').map(s => s.trim()),
+          token2: constraint.token2.split(',').map(s => s.trim())
+        }
+        
+        if (constraint.max_distance) {
+          result.contact.max_distance = constraint.max_distance
+        }
+      }
+      
+      return result
+    }).filter(constraint => Object.keys(constraint).length > 0)
+  }
+
+  const processTemplatesForSubmission = () => {
+    return templates.map(template => {
+      const result = { cif: template.cif }
+      
+      if (template.chain_id) {
+        result.chain_id = template.chain_id.split(',').map(s => s.trim())
+      }
+      
+      if (template.template_id) {
+        result.template_id = template.template_id.split(',').map(s => s.trim())
+      }
+      
+      return result
+    }).filter(template => template.cif)
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     
@@ -135,13 +233,15 @@ const InputView = ({ onJobSubmitted, onShowLoading }) => {
       }
 
       // Add constraints if any
-      if (constraints.length > 0) {
-        formData.constraints = constraints
+      const processedConstraints = processConstraintsForSubmission()
+      if (processedConstraints.length > 0) {
+        formData.constraints = processedConstraints
       }
 
       // Add templates if any
-      if (templates.length > 0) {
-        formData.templates = templates
+      const processedTemplates = processTemplatesForSubmission()
+      if (processedTemplates.length > 0) {
+        formData.templates = processedTemplates
       }
 
       const response = await fetch('/predict', {
@@ -269,6 +369,81 @@ const InputView = ({ onJobSubmitted, onShowLoading }) => {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Advanced Options */}
+          <div className="card">
+            <details className="space-y-6">
+              <summary className="text-xl font-semibold text-gray-800 cursor-pointer hover:text-blue-600">
+                Advanced Options
+              </summary>
+              
+              <div className="mt-6 space-y-6">
+                {/* Constraints */}
+                <div>
+                  <h3 className="text-lg font-medium text-gray-800 mb-4">Constraints (Optional)</h3>
+                  
+                  <div className="space-y-4 mb-4">
+                    {constraints.map((constraint) => (
+                      <ConstraintInput
+                        key={constraint.id}
+                        constraint={constraint}
+                        onUpdate={(updates) => updateConstraint(constraint.id, updates)}
+                        onRemove={() => removeConstraint(constraint.id)}
+                      />
+                    ))}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => addConstraint('bond')}
+                      className="btn-secondary text-sm"
+                    >
+                      🔗 Add Bond Constraint
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => addConstraint('pocket')}
+                      className="btn-secondary text-sm"
+                    >
+                      🕳️ Add Pocket Constraint
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => addConstraint('contact')}
+                      className="btn-secondary text-sm"
+                    >
+                      👋 Add Contact Constraint
+                    </button>
+                  </div>
+                </div>
+
+                {/* Templates */}
+                <div>
+                  <h3 className="text-lg font-medium text-gray-800 mb-4">Templates (Optional)</h3>
+                  
+                  <div className="space-y-4 mb-4">
+                    {templates.map((template) => (
+                      <TemplateInput
+                        key={template.id}
+                        template={template}
+                        onUpdate={(updates) => updateTemplate(template.id, updates)}
+                        onRemove={() => removeTemplate(template.id)}
+                      />
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={addTemplate}
+                    className="btn-secondary text-sm"
+                  >
+                    📋 Add Template
+                  </button>
+                </div>
+              </div>
+            </details>
           </div>
 
           {/* Submit Button */}
