@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-const Sidebar = ({ jobs, selectedJobId, onSelectJob, onNewJob, onRefreshJobs }) => {
+const Sidebar = ({ jobs, selectedJobId, onSelectJob, onNewJob, onRefreshJobs, onHome }) => {
   const formatDate = (timestamp) => {
     const date = new Date(timestamp)
     return {
@@ -18,26 +18,33 @@ const Sidebar = ({ jobs, selectedJobId, onSelectJob, onNewJob, onRefreshJobs }) 
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'completed': return 'text-green-700 bg-green-100 border-green-300'
-      case 'running': return 'text-blue-700 bg-blue-100 border-blue-300'
-      case 'failed': return 'text-red-700 bg-red-100 border-red-300'
-      case 'timeout': return 'text-orange-700 bg-orange-100 border-orange-300'
-      case 'error': return 'text-red-700 bg-red-100 border-red-300'
-      default: return 'text-gray-700 bg-gray-100 border-gray-300'
+      case 'completed': return 'text-green-800 bg-green-200 border-green-400'
+      case 'running': return 'text-blue-800 bg-blue-200 border-blue-400'
+      case 'failed': return 'text-red-800 bg-red-200 border-red-400'
+      case 'timeout': return 'text-orange-800 bg-orange-200 border-orange-400'
+      case 'error': return 'text-red-800 bg-red-200 border-red-400'
+      default: return 'text-gray-800 bg-gray-200 border-gray-400'
     }
   }
 
+  const getJobDisplayName = (job) => {
+    return job.job_name || job.job_id
+  }
+
   return (
-    <div className="w-96 sidebar-container flex flex-col h-screen">
-      {/* Header */}
-      <div className="p-6 border-b-4 border-gray-300 bg-white shadow-lg">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-black text-gray-800 flex items-center">
-            🧬 Boltz Jobs
-          </h2>
+    <div className="w-96 sidebar-container flex flex-col h-screen fixed left-0 top-20 z-10">
+      {/* Fixed Header */}
+      <div className="flex-shrink-0 p-6 border-b-4 border-gray-300 bg-white shadow-lg">
+        <div className="flex flex-col gap-4 mb-6">
+          <button
+            onClick={onHome}
+            className="btn-secondary w-full"
+          >
+            Home
+          </button>
           <button
             onClick={onNewJob}
-            className="btn-primary text-sm"
+            className="btn-primary w-full"
           >
             + New Job
           </button>
@@ -50,17 +57,17 @@ const Sidebar = ({ jobs, selectedJobId, onSelectJob, onNewJob, onRefreshJobs }) 
             className="text-gray-600 hover:text-gray-800 p-2 rounded-lg hover:bg-gray-100 transition-all duration-200 border-2 border-transparent hover:border-gray-300"
             title="Refresh jobs"
           >
-            🔄
+            Refresh
           </button>
         </div>
       </div>
 
-      {/* Jobs List */}
-      <div className="flex-1 overflow-y-auto p-4">
+      {/* Scrollable Jobs List */}
+      <div className="flex-1 overflow-y-auto p-4 bg-gradient-to-b from-slate-50 to-gray-100">
         {jobs.length === 0 ? (
           <div className="text-center py-8">
             <div className="bg-white rounded-2xl border-3 border-gray-300 p-8 shadow-xl">
-              <div className="text-6xl mb-4">🧪</div>
+              <div className="text-6xl mb-4">💡</div>
               <p className="text-gray-600 mb-6 font-semibold text-lg">No jobs yet</p>
               <button
                 onClick={onNewJob}
@@ -87,17 +94,24 @@ const Sidebar = ({ jobs, selectedJobId, onSelectJob, onNewJob, onRefreshJobs }) 
                   }`}
                 >
                   <div className="flex items-start justify-between mb-3">
-                    <div className="font-bold text-gray-800 text-sm flex-1 mr-3 break-words">
-                      {job.job_id}
+                    <div className="flex-1 mr-3 min-w-0">
+                      <div className="font-bold text-gray-800 text-base truncate">
+                        {getJobDisplayName(job)}
+                      </div>
+                      {job.job_name && (
+                        <div className="text-xs text-gray-500 font-mono mt-1 truncate">
+                          {job.job_id}
+                        </div>
+                      )}
                     </div>
-                    <span className={`status-badge ${getStatusColor(job.status)}`}>
+                    <span className={`status-badge flex-shrink-0 ${getStatusColor(job.status)}`}>
                       {job.status}
                     </span>
                   </div>
                   
-                  <div className="text-sm text-gray-600 space-y-2">
+                  <div className="text-sm text-gray-600 space-y-1">
                     <div className="font-semibold">{getJobSummary(job)}</div>
-                    <div className="text-xs font-medium">{date} at {time}</div>
+                    <div className="text-xs font-medium text-gray-500">{date} at {time}</div>
                   </div>
                 </div>
               )

@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
+import Header from './components/Header'
 import Sidebar from './components/Sidebar'
 import InputView from './components/InputView'
 import ResultsView from './components/ResultsView'
 import LoadingView from './components/LoadingView'
+import LandingPage from './components/LandingPage'
 
 function App() {
-  const [currentView, setCurrentView] = useState('input')
+  const [currentView, setCurrentView] = useState('landing')
   const [selectedJobId, setSelectedJobId] = useState(null)
   const [jobs, setJobs] = useState([])
 
@@ -44,19 +46,37 @@ function App() {
     loadJobs()
   }
 
+  const handleGetStarted = () => {
+    setCurrentView('input')
+  }
+
+  const handleHome = () => {
+    setCurrentView('landing')
+    setSelectedJobId(null)
+  }
+
+  // Show landing page without header and sidebar
+  if (currentView === 'landing') {
+    return <LandingPage onGetStarted={handleGetStarted} />
+  }
+
   return (
-    <div className="min-h-screen main-container flex">
-      {/* Sidebar */}
+    <div className="min-h-screen main-container">
+      {/* Fixed Header */}
+      <Header />
+      
+      {/* Fixed Sidebar */}
       <Sidebar 
         jobs={jobs}
         selectedJobId={selectedJobId}
         onSelectJob={selectJob}
         onNewJob={() => showView('input')}
         onRefreshJobs={loadJobs}
+        onHome={handleHome}
       />
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-screen">
+      {/* Main Content with margins to account for fixed header and sidebar */}
+      <div className="ml-96 pt-20 min-h-screen flex flex-col">
         {currentView === 'input' && (
           <InputView 
             onJobSubmitted={loadJobs}

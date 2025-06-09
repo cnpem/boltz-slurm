@@ -4,6 +4,7 @@ import ConstraintInput from './ConstraintInput'
 import TemplateInput from './TemplateInput'
 
 const InputView = ({ onJobSubmitted, onShowLoading }) => {
+  const [jobName, setJobName] = useState('')
   const [sequences, setSequences] = useState([])
   const [constraints, setConstraints] = useState([])
   const [templates, setTemplates] = useState([])
@@ -214,6 +215,7 @@ const InputView = ({ onJobSubmitted, onShowLoading }) => {
     try {
       const formData = {
         version: 1,
+        ...(jobName && { job_name: jobName }),
         sequences: sequences.map(seq => ({
           entity_type: seq.entity_type,
           id: seq.chainId,
@@ -276,20 +278,43 @@ const InputView = ({ onJobSubmitted, onShowLoading }) => {
   }
 
   return (
-    <div className="flex-1 p-6 overflow-y-auto">
-      <div className="max-w-4xl mx-auto">
+    <div className="flex-1 p-8 overflow-y-auto main-container">
+      <div className="max-w-5xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center">
-            🚀 Run New Protein-Ligand Co-Folding
+        <div className="card-header mb-8">
+          <h1 className="text-4xl font-black text-gray-800 mb-4 flex items-center">
+            Run New Protein-Ligand Co-Folding
           </h1>
-          <p className="text-gray-600">Predict protein-ligand binding affinity using Boltz</p>
+          <p className="text-lg text-gray-700 font-semibold">Predict protein-ligand binding affinity using Boltz</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Job Name Section */}
+          <div className="card">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">Job Information</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Job Name (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={jobName}
+                  onChange={(e) => setJobName(e.target.value)}
+                  placeholder="Enter a descriptive name for this job..."
+                  className="form-input"
+                  maxLength={100}
+                />
+                <p className="text-sm text-gray-500 mt-1">
+                  Give your job a meaningful name to easily identify it later. If left empty, a unique ID will be used.
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Sequences Section */}
           <div className="card">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Sequences</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">Sequences</h2>
             
             <div className="space-y-4 mb-4">
               {sequences.map((sequence) => (
@@ -336,7 +361,7 @@ const InputView = ({ onJobSubmitted, onShowLoading }) => {
 
           {/* Properties Section */}
           <div className="card">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Properties</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">Properties</h2>
             
             <div className="space-y-4">
               <label className="flex items-center space-x-3">
@@ -374,7 +399,7 @@ const InputView = ({ onJobSubmitted, onShowLoading }) => {
           {/* Advanced Options */}
           <div className="card">
             <details className="space-y-6">
-              <summary className="text-xl font-semibold text-gray-800 cursor-pointer hover:text-blue-600">
+              <summary className="text-2xl font-bold text-gray-800 cursor-pointer hover:text-blue-600">
                 Advanced Options
               </summary>
               

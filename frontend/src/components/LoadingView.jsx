@@ -60,32 +60,32 @@ const LoadingView = ({ onComplete, onJobCompleted }) => {
   }, [submittedJobId, onComplete, onJobCompleted])
 
   return (
-    <div className="flex-1 flex items-center justify-center bg-gray-50">
-      <div className="text-center max-w-md">
-        <div className="spinner mx-auto mb-6"></div>
+    <div className="flex-1 flex items-center justify-center main-container p-8">
+      <div className="text-center max-w-lg">
+        <div className="spinner mx-auto mb-8"></div>
         
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">
+        <h2 className="text-4xl font-black text-gray-800 mb-6">
           Running Prediction...
         </h2>
         
-        <p className="text-gray-600 mb-8">
+        <p className="text-lg text-gray-700 mb-8 font-semibold">
           This may take several minutes. The Boltz model is analyzing your sequences and predicting the protein-ligand binding structure and affinity.
         </p>
 
         {submittedJobId && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <p className="text-sm text-blue-700">
+          <div className="section-card bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-300 mb-8">
+            <p className="text-sm font-bold text-blue-800">
               <strong>Job ID:</strong> {submittedJobId}
             </p>
-            <p className="text-xs text-blue-600 mt-1">
+            <p className="text-xs text-blue-700 mt-2 font-semibold">
               Checking status every 2 seconds...
             </p>
           </div>
         )}
         
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="font-semibold text-gray-800 mb-3">What's happening?</h3>
-          <ul className="text-sm text-gray-600 space-y-2 text-left">
+        <div className="card">
+          <h3 className="font-black text-gray-800 mb-4 text-xl">What's happening?</h3>
+          <ul className="text-sm text-gray-700 space-y-3 text-left font-semibold">
             <li>• Processing input sequences</li>
             <li>• Running multiple sequence alignment (if needed)</li>
             <li>• Generating structure predictions</li>
@@ -94,7 +94,7 @@ const LoadingView = ({ onComplete, onJobCompleted }) => {
           </ul>
         </div>
         
-        <p className="text-xs text-gray-500 mt-6">
+        <p className="text-sm text-gray-600 mt-8 font-semibold">
           You will be automatically redirected to the results when the job completes.
         </p>
       </div>

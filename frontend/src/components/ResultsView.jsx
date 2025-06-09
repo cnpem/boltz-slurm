@@ -70,7 +70,7 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
       <div className="space-y-4">
         {/* Ensemble Results */}
         <div className="section-card bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-300">
-          <h4 className="font-black text-blue-800 mb-4 text-lg">📊 Ensemble Model Results</h4>
+          <h4 className="font-black text-blue-800 mb-4 text-lg">Ensemble Model Results</h4>
           <div className="space-y-3">
             {data.affinity_pred_value !== undefined && (
               <div className="metric-box">
@@ -174,7 +174,7 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
 
         {/* Interpretation Guide */}
         <div className="interpretation-box">
-          <h4 className="font-black text-yellow-800 mb-4 text-lg">📖 Interpretation Guide</h4>
+          <h4 className="font-black text-yellow-800 mb-4 text-lg">Interpretation Guide</h4>
           <div className="text-sm text-yellow-700 space-y-2 font-semibold">
             <p><strong>Lower affinity values = stronger binding</strong></p>
             <p>• Strong binders: log(IC50) ≤ -1 (IC50 ≤ 10⁻⁷ M)</p>
@@ -211,7 +211,7 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
       <div className="space-y-4">
         {/* Overall Confidence */}
         <div className="section-card bg-gradient-to-br from-green-50 to-emerald-50 border-green-300">
-          <h4 className="font-black text-green-800 mb-4 text-lg">🎯 Overall Confidence</h4>
+                      <h4 className="font-black text-green-800 mb-4 text-lg">Overall Confidence</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {data.confidence_score !== undefined && (
               <div className="metric-box">
@@ -349,7 +349,7 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
 
         {/* Score Interpretation */}
         <div className="interpretation-box">
-          <h4 className="font-black text-yellow-800 mb-4 text-lg">📖 Score Interpretation</h4>
+          <h4 className="font-black text-yellow-800 mb-4 text-lg">Score Interpretation</h4>
           <div className="text-sm text-yellow-700 space-y-2 font-semibold">
             <p><strong>Confidence & TM Scores (0-1):</strong> Higher values = better confidence</p>
             <p><strong>Distance Errors (Ångstroms):</strong> Lower values = better accuracy</p>
@@ -398,15 +398,26 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
           </div>
           
           <h1 className="text-4xl font-black text-gray-800 mb-4">
-            Job Results: {jobData.job_id}
+            Job Results: {jobData.job_name || jobData.job_id}
           </h1>
+          {jobData.job_name && (
+            <p className="text-lg text-gray-600 font-mono">
+              ID: {jobData.job_id}
+            </p>
+          )}
         </div>
 
         {/* Job Information */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
           <div className="results-section info-section">
-            <h3 className="text-2xl font-black text-gray-800 mb-6">📋 Job Information</h3>
+            <h3 className="text-2xl font-black text-gray-800 mb-6">Job Information</h3>
             <div className="space-y-4">
+              {jobData.job_name && (
+                <div className="flex justify-between items-center p-3 bg-white rounded-lg border-2 border-gray-200">
+                  <span className="font-bold text-gray-700">Job Name:</span>
+                  <span className="text-gray-900 font-semibold">{jobData.job_name}</span>
+                </div>
+              )}
               <div className="flex justify-between items-center p-3 bg-white rounded-lg border-2 border-gray-200">
                 <span className="font-bold text-gray-700">Job ID:</span>
                 <span className="text-gray-900 font-mono text-sm">{jobData.job_id}</span>
@@ -431,7 +442,7 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
           </div>
 
           <div className="results-section info-section">
-            <h3 className="text-2xl font-black text-gray-800 mb-6">🧬 Entities</h3>
+            <h3 className="text-2xl font-black text-gray-800 mb-6">Entities</h3>
             <div className="space-y-4">
               {(jobData.entities || []).map((entity, index) => (
                 <div key={index} className="bg-white rounded-xl border-2 border-gray-200 p-4 shadow-lg">
@@ -473,7 +484,7 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
         {jobData.status === 'completed' && (
           <div className="mb-8">
             <div className="results-section from-slate-50 to-gray-50 border-gray-300">
-              <h3 className="text-2xl font-black text-gray-800 mb-6">🔬 3D Structure</h3>
+              <h3 className="text-2xl font-black text-gray-800 mb-6">3D Structure</h3>
               <MolstarViewer jobId={jobId} className="w-full rounded-xl border-3 border-gray-300 shadow-xl" />
             </div>
           </div>
@@ -485,7 +496,7 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
             {resultsData.affinity && (
               <div className="results-section affinity-section">
                 <h3 className="text-2xl font-black text-gray-800 mb-6 flex items-center">
-                  🎯 Affinity Results
+                  Affinity Results
                 </h3>
                 {renderAffinityResults(resultsData.affinity)}
               </div>
@@ -494,7 +505,7 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
             {resultsData.confidence && (
               <div className="results-section confidence-section">
                 <h3 className="text-2xl font-black text-gray-800 mb-6 flex items-center">
-                  📊 Confidence Results
+                  Confidence Results
                 </h3>
                 {renderConfidenceResults(resultsData.confidence)}
               </div>
@@ -505,7 +516,7 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
         {/* Error Information */}
         {(jobData.status === 'failed' || jobData.status === 'error') && (
           <div className="results-section from-red-50 to-pink-50 border-red-300">
-            <h3 className="text-2xl font-black text-red-800 mb-6">❌ Error Information</h3>
+            <h3 className="text-2xl font-black text-red-800 mb-6">Error Information</h3>
             
             {jobData.stderr && (
               <div className="mb-6">

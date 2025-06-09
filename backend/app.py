@@ -83,6 +83,7 @@ class BoltzRequest(BaseModel):
     constraints: Optional[List[Constraint]] = None
     templates: Optional[List[Template]] = None
     properties: Optional[List[Property]] = None
+    job_name: Optional[str] = None
     version: int = 1
 
 class PredictionResponse(BaseModel):
@@ -381,6 +382,10 @@ async def predict_boltz(request: BoltzRequest):
             "output_dir": str(output_dir),
             "command": ""
         }
+        
+        # Add job name if provided
+        if request.job_name:
+            job_info["job_name"] = request.job_name
         save_job_info(job_path, job_info)
         
         # Run the Boltz prediction command with output directory
