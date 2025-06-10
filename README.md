@@ -10,6 +10,8 @@ If you have any suggestions or feedback please feel free to open an issue or rea
 
 **Boltz-2** is a revolutionary biomolecular foundation model developed by researchers at MIT and Recursion that approaches the accuracy of physics-based FEP methods while running 1000x faster, making accurate in silico screening practical for early-stage drug discovery.
 
+![Boltz-2 GUI](./images/boltz-gui-1.png)
+
 ## Features
 
 ### **Intuitive Job Management**
@@ -104,6 +106,8 @@ Open your browser and navigate to http://localhost:6868 to access the Boltz GUI.
 ### 1. **Landing Page**
 Start at the landing page which provides an overview of Boltz-2 capabilities and features.
 
+![Boltz-2 GUI](./images/boltz-gui-1.png)
+
 ### 2. **Create New Job**
 - Click "Try Boltz-2 Now" or "+ New Job"
 - **Quick Start**: Load pre-configured examples for different prediction types
@@ -111,6 +115,8 @@ Start at the landing page which provides an overview of Boltz-2 capabilities and
 - Add protein and ligand sequences
 - Configure prediction properties (binding affinity, etc.)
 - Optionally add advanced constraints or templates
+
+![Boltz-2 GUI](./images/boltz-gui-2.png)
 
 ### 3. **Monitor Progress**
 - Real-time job status updates in the sidebar
@@ -122,6 +128,12 @@ Start at the landing page which provides an overview of Boltz-2 capabilities and
 - Comprehensive binding affinity analysis
 - Detailed confidence metrics
 - Built-in interpretation guides
+
+![Boltz-2 GUI](./images/boltz-gui-3.png)
+
+![Boltz-2 GUI](./images/boltz-gui-4.png)
+
+![Boltz-2 GUI](./images/boltz-gui-5.png)
 
 ### 5. **Download Results**
 - Download 3D structures (PDB format)
