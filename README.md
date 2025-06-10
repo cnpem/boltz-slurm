@@ -79,6 +79,7 @@ Boltz-2 is the first deep learning model to approach FEP-level accuracy in bindi
 ```bash
 cd backend
 uv sync
+source .venv/bin/activate
 uv run run_server.py
 ```
 
