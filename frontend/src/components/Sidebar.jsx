@@ -59,7 +59,13 @@ const Sidebar = ({ jobs, selectedJobId, onSelectJob, onNewJob, onRefreshJobs, on
   return (
     <div className="w-96 sidebar-container flex flex-col h-screen fixed left-0 top-20 z-10">
       {/* Fixed Header */}
-      <div className="flex-shrink-0 p-6 border-b-4 border-gray-300 bg-white shadow-lg">
+      <div className="flex-shrink-0 p-6 shadow-2xl"
+           style={{
+             background: 'rgba(255, 255, 255, 0.2)',
+             backdropFilter: 'blur(20px)',
+             border: '1px solid rgba(255, 255, 255, 0.3)',
+             borderBottom: '1px solid rgba(255, 255, 255, 0.2)'
+           }}>
         <div className="flex flex-col gap-4 mb-6">
           <button
             onClick={onHome}
@@ -88,10 +94,15 @@ const Sidebar = ({ jobs, selectedJobId, onSelectJob, onNewJob, onRefreshJobs, on
       </div>
 
       {/* Scrollable Jobs List */}
-      <div className="flex-1 overflow-y-auto p-4 bg-gradient-to-b from-slate-50 to-gray-100">
+      <div className="flex-1 overflow-y-auto p-4">
         {jobs.length === 0 ? (
           <div className="text-center py-8">
-            <div className="bg-white rounded-2xl border-3 border-gray-300 p-8 shadow-xl">
+            <div className="rounded-2xl p-8 shadow-2xl transition-all duration-300 hover:scale-105"
+                 style={{
+                   background: 'rgba(255, 255, 255, 0.15)',
+                   backdropFilter: 'blur(20px)',
+                   border: '1px solid rgba(255, 255, 255, 0.2)'
+                 }}>
               <div className="text-6xl mb-4">💡</div>
               <p className="text-gray-600 mb-6 font-semibold text-lg">No jobs yet</p>
               <button

@@ -173,9 +173,14 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
             )}
             
             {data.affinity_probability_binary !== undefined && (
-              <div className="bg-white rounded p-3">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium text-blue-700">Binding Probability:</span>
+                              <div className="rounded p-3 shadow-lg transition-all duration-200 hover:scale-[1.01]"
+                     style={{
+                       background: 'rgba(255, 255, 255, 0.2)',
+                       backdropFilter: 'blur(8px)',
+                       border: '1px solid rgba(255, 255, 255, 0.3)'
+                     }}>
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-blue-700">Binding Probability:</span>
                   <div className="text-right">
                     <span className="text-blue-900 font-mono text-lg">
                       {(data.affinity_probability_binary * 100).toFixed(1)}%
@@ -192,12 +197,22 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
 
         {/* Individual Model Results */}
         {(data.affinity_pred_value1 !== undefined || data.affinity_pred_value2 !== undefined) && (
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <div className="rounded-lg p-4 shadow-lg transition-all duration-300 hover:scale-[1.01]"
+               style={{
+                 background: 'rgba(107, 114, 128, 0.1)',
+                 backdropFilter: 'blur(12px)',
+                 border: '1px solid rgba(107, 114, 128, 0.2)'
+               }}>
             <h4 className="font-semibold text-gray-800 mb-3">🔬 Individual Model Results</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Model 1 */}
               {data.affinity_pred_value1 !== undefined && (
-                <div className="bg-white rounded p-3">
+                <div className="rounded p-3 shadow-md transition-all duration-200 hover:scale-[1.02]"
+                     style={{
+                       background: 'rgba(255, 255, 255, 0.2)',
+                       backdropFilter: 'blur(8px)',
+                       border: '1px solid rgba(255, 255, 255, 0.3)'
+                     }}>
                   <h5 className="font-medium text-gray-700 mb-2">Model 1</h5>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
@@ -220,7 +235,12 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
 
               {/* Model 2 */}
               {data.affinity_pred_value2 !== undefined && (
-                <div className="bg-white rounded p-3">
+                <div className="rounded p-3 shadow-md transition-all duration-200 hover:scale-[1.02]"
+                     style={{
+                       background: 'rgba(255, 255, 255, 0.2)',
+                       backdropFilter: 'blur(8px)',
+                       border: '1px solid rgba(255, 255, 255, 0.3)'
+                     }}>
                   <h5 className="font-medium text-gray-700 mb-2">Model 2</h5>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
@@ -303,7 +323,12 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
             )}
 
             {data.complex_plddt !== undefined && (
-              <div className="bg-white rounded p-3">
+              <div className="rounded p-3 shadow-md transition-all duration-200 hover:scale-[1.02]"
+                   style={{
+                     background: 'rgba(255, 255, 255, 0.2)',
+                     backdropFilter: 'blur(8px)',
+                     border: '1px solid rgba(255, 255, 255, 0.3)'
+                   }}>
                 <div className="text-center">
                   <div className="text-sm text-gray-600 mb-1">Complex pLDDT</div>
                   <div className={`text-2xl font-bold ${getConfidenceColor(data.complex_plddt)}`}>
@@ -319,11 +344,21 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
         </div>
 
         {/* TM Scores */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="rounded-lg p-4 shadow-lg transition-all duration-300 hover:scale-[1.01]"
+             style={{
+               background: 'rgba(59, 130, 246, 0.1)',
+               backdropFilter: 'blur(12px)',
+               border: '1px solid rgba(59, 130, 246, 0.2)'
+             }}>
           <h4 className="font-semibold text-blue-800 mb-3">📐 Template Modeling (TM) Scores</h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {data.ptm !== undefined && (
-              <div className="bg-white rounded p-3 text-center">
+              <div className="rounded p-3 text-center shadow-md transition-all duration-200 hover:scale-[1.02]"
+                   style={{
+                     background: 'rgba(255, 255, 255, 0.2)',
+                     backdropFilter: 'blur(8px)',
+                     border: '1px solid rgba(255, 255, 255, 0.3)'
+                   }}>
                 <div className="text-sm text-gray-600">PTM (Complex)</div>
                 <div className={`text-lg font-bold ${getConfidenceColor(data.ptm)}`}>
                   {(data.ptm * 100).toFixed(1)}%
@@ -331,7 +366,12 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
               </div>
             )}
             {data.iptm !== undefined && (
-              <div className="bg-white rounded p-3 text-center">
+              <div className="rounded p-3 text-center shadow-md transition-all duration-200 hover:scale-[1.02]"
+                   style={{
+                     background: 'rgba(255, 255, 255, 0.2)',
+                     backdropFilter: 'blur(8px)',
+                     border: '1px solid rgba(255, 255, 255, 0.3)'
+                   }}>
                 <div className="text-sm text-gray-600">ipTM (Interface)</div>
                 <div className={`text-lg font-bold ${getConfidenceColor(data.iptm)}`}>
                   {(data.iptm * 100).toFixed(1)}%
@@ -339,7 +379,12 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
               </div>
             )}
             {data.protein_iptm !== undefined && (
-              <div className="bg-white rounded p-3 text-center">
+              <div className="rounded p-3 text-center shadow-md transition-all duration-200 hover:scale-[1.02]"
+                   style={{
+                     background: 'rgba(255, 255, 255, 0.2)',
+                     backdropFilter: 'blur(8px)',
+                     border: '1px solid rgba(255, 255, 255, 0.3)'
+                   }}>
                 <div className="text-sm text-gray-600">Protein ipTM</div>
                 <div className={`text-lg font-bold ${getConfidenceColor(data.protein_iptm)}`}>
                   {(data.protein_iptm * 100).toFixed(1)}%
@@ -351,11 +396,21 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
 
         {/* Distance Errors */}
         {(data.complex_pde !== undefined || data.complex_ipde !== undefined) && (
-          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+          <div className="rounded-lg p-4 shadow-lg transition-all duration-300 hover:scale-[1.01]"
+               style={{
+                 background: 'rgba(168, 85, 247, 0.1)',
+                 backdropFilter: 'blur(12px)',
+                 border: '1px solid rgba(168, 85, 247, 0.2)'
+               }}>
             <h4 className="font-semibold text-purple-800 mb-3">📏 Distance Errors (Lower = Better)</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {data.complex_pde !== undefined && (
-                <div className="bg-white rounded p-3 text-center">
+                <div className="rounded p-3 text-center shadow-md transition-all duration-200 hover:scale-[1.02]"
+                     style={{
+                       background: 'rgba(255, 255, 255, 0.2)',
+                       backdropFilter: 'blur(8px)',
+                       border: '1px solid rgba(255, 255, 255, 0.3)'
+                     }}>
                   <div className="text-sm text-gray-600">Complex PDE</div>
                   <div className="text-lg font-bold text-purple-700">
                     {data.complex_pde.toFixed(2)} Å
@@ -364,7 +419,12 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
                 </div>
               )}
               {data.complex_ipde !== undefined && (
-                <div className="bg-white rounded p-3 text-center">
+                <div className="rounded p-3 text-center shadow-md transition-all duration-200 hover:scale-[1.02]"
+                     style={{
+                       background: 'rgba(255, 255, 255, 0.2)',
+                       backdropFilter: 'blur(8px)',
+                       border: '1px solid rgba(255, 255, 255, 0.3)'
+                     }}>
                   <div className="text-sm text-gray-600">Interface PDE</div>
                   <div className="text-lg font-bold text-purple-700">
                     {data.complex_ipde.toFixed(2)} Å
@@ -378,7 +438,12 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
 
         {/* Chain-wise Results */}
         {(data.chains_ptm || data.pair_chains_iptm) && (
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <div className="rounded-lg p-4 shadow-lg transition-all duration-300 hover:scale-[1.01]"
+               style={{
+                 background: 'rgba(107, 114, 128, 0.1)',
+                 backdropFilter: 'blur(12px)',
+                 border: '1px solid rgba(107, 114, 128, 0.2)'
+               }}>
             <h4 className="font-semibold text-gray-800 mb-3">🔗 Chain-wise Analysis</h4>
             
             {data.chains_ptm && (
@@ -386,7 +451,12 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
                 <h5 className="font-medium text-gray-700 mb-2">Individual Chain PTM</h5>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   {Object.entries(data.chains_ptm).map(([chain, score]) => (
-                    <div key={chain} className="bg-white rounded p-2 text-center">
+                    <div key={chain} className="rounded p-2 text-center shadow-md transition-all duration-200 hover:scale-[1.02]"
+                         style={{
+                           background: 'rgba(255, 255, 255, 0.2)',
+                           backdropFilter: 'blur(8px)',
+                           border: '1px solid rgba(255, 255, 255, 0.3)'
+                         }}>
                       <div className="text-xs text-gray-600">Chain {chain}</div>
                       <div className={`font-bold ${getConfidenceColor(score)}`}>
                         {(score * 100).toFixed(1)}%
@@ -400,7 +470,12 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
             {data.pair_chains_iptm && (
               <div>
                 <h5 className="font-medium text-gray-700 mb-2">Pairwise Chain ipTM</h5>
-                <div className="bg-white rounded p-3">
+                <div className="rounded p-3 shadow-md transition-all duration-200 hover:scale-[1.01]"
+                     style={{
+                       background: 'rgba(255, 255, 255, 0.2)',
+                       backdropFilter: 'blur(8px)',
+                       border: '1px solid rgba(255, 255, 255, 0.3)'
+                     }}>
                   <div className="grid gap-2">
                     {Object.entries(data.pair_chains_iptm).map(([chain1, pairs]) => 
                       Object.entries(pairs).map(([chain2, score]) => (
@@ -523,27 +598,52 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
             <h3 className="text-2xl font-black text-gray-800 mb-6">Job Information</h3>
             <div className="space-y-4">
               {jobData.job_name && (
-                <div className="flex justify-between items-center p-3 bg-white rounded-lg border-2 border-gray-200">
+                <div className="flex justify-between items-center p-3 rounded-lg shadow-md transition-all duration-200 hover:scale-[1.01]"
+                     style={{
+                       background: 'rgba(255, 255, 255, 0.2)',
+                       backdropFilter: 'blur(8px)',
+                       border: '1px solid rgba(255, 255, 255, 0.3)'
+                     }}>
                   <span className="font-bold text-gray-700">Job Name:</span>
                   <span className="text-gray-900 font-semibold">{jobData.job_name}</span>
                 </div>
               )}
-              <div className="flex justify-between items-center p-3 bg-white rounded-lg border-2 border-gray-200">
+              <div className="flex justify-between items-center p-3 rounded-lg shadow-md transition-all duration-200 hover:scale-[1.01]"
+                   style={{
+                     background: 'rgba(255, 255, 255, 0.2)',
+                     backdropFilter: 'blur(8px)',
+                     border: '1px solid rgba(255, 255, 255, 0.3)'
+                   }}>
                 <span className="font-bold text-gray-700">Job ID:</span>
                 <span className="text-gray-900 font-mono text-sm">{jobData.job_id}</span>
               </div>
-              <div className="flex justify-between items-center p-3 bg-white rounded-lg border-2 border-gray-200">
+              <div className="flex justify-between items-center p-3 rounded-lg shadow-md transition-all duration-200 hover:scale-[1.01]"
+                   style={{
+                     background: 'rgba(255, 255, 255, 0.2)',
+                     backdropFilter: 'blur(8px)',
+                     border: '1px solid rgba(255, 255, 255, 0.3)'
+                   }}>
                 <span className="font-bold text-gray-700">Status:</span>
                 <span className={`status-badge ${getStatusColor(jobData.status)}`}>
                   {jobData.status}
                 </span>
               </div>
-              <div className="flex justify-between items-center p-3 bg-white rounded-lg border-2 border-gray-200">
+              <div className="flex justify-between items-center p-3 rounded-lg shadow-md transition-all duration-200 hover:scale-[1.01]"
+                   style={{
+                     background: 'rgba(255, 255, 255, 0.2)',
+                     backdropFilter: 'blur(8px)',
+                     border: '1px solid rgba(255, 255, 255, 0.3)'
+                   }}>
                 <span className="font-bold text-gray-700">Created:</span>
                 <span className="text-gray-900 font-semibold">{formatDate(jobData.timestamp)}</span>
               </div>
               {jobData.completion_time && (
-                <div className="flex justify-between items-center p-3 bg-white rounded-lg border-2 border-gray-200">
+                <div className="flex justify-between items-center p-3 rounded-lg shadow-md transition-all duration-200 hover:scale-[1.01]"
+                     style={{
+                       background: 'rgba(255, 255, 255, 0.2)',
+                       backdropFilter: 'blur(8px)',
+                       border: '1px solid rgba(255, 255, 255, 0.3)'
+                     }}>
                   <span className="font-bold text-gray-700">Completed:</span>
                   <span className="text-gray-900 font-semibold">{formatDate(jobData.completion_time)}</span>
                 </div>
@@ -555,7 +655,12 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
             <h3 className="text-2xl font-black text-gray-800 mb-6">Entities</h3>
             <div className="space-y-4">
               {(jobData.entities || []).map((entity, index) => (
-                <div key={index} className="bg-white rounded-xl border-2 border-gray-200 p-4 shadow-lg">
+                <div key={index} className="rounded-xl p-4 shadow-xl transition-all duration-300 hover:scale-[1.02]"
+                     style={{
+                       background: 'rgba(255, 255, 255, 0.15)',
+                       backdropFilter: 'blur(16px)',
+                       border: '1px solid rgba(255, 255, 255, 0.2)'
+                     }}>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="flex justify-between">
                       <span className="font-bold text-gray-700">Type:</span>

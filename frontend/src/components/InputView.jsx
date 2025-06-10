@@ -546,7 +546,7 @@ const InputView = ({ onJobSubmitted, onShowLoading, onBackToHome }) => {
 
         {/* Examples Section */}
         <div className="mb-8">
-          <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border-3 border-blue-300 rounded-2xl p-6 shadow-xl">
+          <div className="rounded-2xl p-6 shadow-2xl transition-all duration-500 hover:scale-[1.01] affinity-section">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-2xl font-black text-blue-800 mb-2">Quick Start Examples</h2>
@@ -573,7 +573,12 @@ const InputView = ({ onJobSubmitted, onShowLoading, onBackToHome }) => {
                 {examples.map((example) => (
                   <div
                     key={example.id}
-                    className="bg-white rounded-xl border-2 border-blue-200 p-4 hover:border-blue-400 hover:shadow-lg transition-all duration-200 cursor-pointer"
+                    className="rounded-xl p-4 shadow-lg transition-all duration-300 cursor-pointer hover:scale-105"
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.2)',
+                      backdropFilter: 'blur(12px)',
+                      border: '1px solid rgba(59, 130, 246, 0.3)'
+                    }}
                     onClick={() => loadExample(example)}
                   >
                     <h3 className="font-bold text-blue-800 mb-2">{example.name}</h3>

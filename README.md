@@ -2,7 +2,7 @@
 
 A user-friendly web interface for running Boltz-2 predictions with visualizations and streamlined workflows for protein-ligand co-folding and binding affinity prediction.
 
-My reason for making this is because Biology is a beautiful field and it's software should be beautiful too.
+I made this because Biology is a beautiful and it's software should be beautiful too.
 
 Feel free to use and modify this for your own purposes. In the first iteration, I have made this only for local use. If someone has GPUs and would like to host it for others to try, please reach out to me.
 
@@ -10,7 +10,7 @@ If you have any suggestions or feedback please feel free to open an issue or rea
 
 **Boltz-2** is a revolutionary biomolecular foundation model developed by researchers at MIT and Recursion that approaches the accuracy of physics-based FEP methods while running 1000x faster, making accurate in silico screening practical for early-stage drug discovery.
 
-## 🚀 Features
+## Features
 
 ### **Intuitive Job Management**
 - Custom job naming for easy organization
@@ -30,7 +30,11 @@ If you have any suggestions or feedback please feel free to open an issue or rea
 - **Confidence Scoring**: Detailed confidence metrics and quality assessments
 - **Results Interpretation**: Built-in guides for understanding predictions
 
-## 🧬 About Boltz-2
+### **Liquid Glass UI**
+You can switch to liquid_glass branch to use the Liquid Glass UI.
+
+
+## About Boltz-2
 
 Boltz-2 is the first deep learning model to approach FEP-level accuracy in binding affinity prediction while being:
 
@@ -44,12 +48,12 @@ Boltz-2 is the first deep learning model to approach FEP-level accuracy in bindi
 - Approaches the accuracy of physics-based free-energy perturbation methods
 - Enables practical large-scale virtual screening for drug discovery
 
-## 📚 References
+## References
 
 - **Original Boltz Repository**: https://github.com/jwohlwend/boltz/
 - **Boltz-2 Paper**: https://cdn.prod.website-files.com/68404fd075dba49e58331ad9/6842ee1285b9af247ac5a122_boltz2.pdf
 
-## 🏗️ Architecture
+## Architecture
 
 - **Frontend**: React + Vite + Tailwind CSS (`/frontend`)
   - Modern, responsive web interface
@@ -63,7 +67,7 @@ Boltz-2 is the first deep learning model to approach FEP-level accuracy in bindi
   - Structured data storage and retrieval
   - Real-time job status updates
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -75,7 +79,6 @@ Boltz-2 is the first deep learning model to approach FEP-level accuracy in bindi
 ```bash
 cd backend
 uv sync
-source .venv/bin/activate # or .venv/Scripts/activate on Windows
 uv run run_server.py
 ```
 
@@ -95,7 +98,7 @@ The web interface will be available at http://localhost:6868
 
 Open your browser and navigate to http://localhost:6868 to access the Boltz GUI.
 
-## 💻 Usage
+## Usage
 
 ### 1. **Landing Page**
 Start at the landing page which provides an overview of Boltz-2 capabilities and features.
@@ -125,7 +128,7 @@ Start at the landing page which provides an overview of Boltz-2 capabilities and
 - Download complete archives (ZIP with all files)
 - Quick download from sidebar for completed jobs
 
-## 📖 Example Templates
+## Example Templates
 
 The interface includes six pre-configured examples to help you get started:
 
@@ -137,7 +140,7 @@ The interface includes six pre-configured examples to help you get started:
 
 
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 boltz-gui/
