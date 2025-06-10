@@ -154,6 +154,10 @@ boltz-gui/
 └── README.md
 ```
 
+TODO:
+- [ ] Add advanced options like Constraints, Templates, etc.
+- [ ] Bulk upload of jobs
+
 ## Acknowledgments
 
 - **Boltz Team** at MIT Jameel Clinic and Recursion for developing Boltz-2

@@ -712,6 +712,7 @@ const InputView = ({ onJobSubmitted, onShowLoading, onBackToHome }) => {
           </div>
 
           {/* Advanced Options */}
+          {/*
           <div className="card">
             <details className="space-y-6">
               <summary className="text-2xl font-bold text-gray-800 cursor-pointer hover:text-blue-600">
@@ -719,7 +720,9 @@ const InputView = ({ onJobSubmitted, onShowLoading, onBackToHome }) => {
               </summary>
               
               <div className="mt-6 space-y-6">
+              */}
                 {/* Constraints */}
+                {/*
                 <div>
                   <h3 className="text-lg font-medium text-gray-800 mb-4">Constraints (Optional)</h3>
                   
@@ -758,8 +761,9 @@ const InputView = ({ onJobSubmitted, onShowLoading, onBackToHome }) => {
                     </button>
                   </div>
                 </div>
-
+                */}
                 {/* Templates */}
+                {/*
                 <div>
                   <h3 className="text-lg font-medium text-gray-800 mb-4">Templates (Optional)</h3>
                   
@@ -785,7 +789,7 @@ const InputView = ({ onJobSubmitted, onShowLoading, onBackToHome }) => {
               </div>
             </details>
           </div>
-
+*/} 
           {/* Submit Button */}
           <div className="flex justify-center">
             <button
