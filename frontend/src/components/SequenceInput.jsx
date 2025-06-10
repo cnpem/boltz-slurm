@@ -11,16 +11,16 @@ const SequenceInput = ({ sequence, onUpdate, onRemove }) => {
 
   const getSequenceColor = (type) => {
     switch (type) {
-      case 'protein': return 'border-blue-300 bg-blue-50'
-      case 'dna': return 'border-green-300 bg-green-50'
-      case 'rna': return 'border-purple-300 bg-purple-50'
-      case 'ligand': return 'border-orange-300 bg-orange-50'
-      default: return 'border-gray-300 bg-gray-50'
+      case 'protein': return 'glass-card-blue'
+      case 'dna': return 'glass-card-green'
+      case 'rna': return 'glass-card-purple'
+      case 'ligand': return 'glass-card-orange'
+      default: return 'glass-card-gray'
     }
   }
 
   return (
-    <div className={`border-2 rounded-lg p-4 ${getSequenceColor(sequence.entity_type)}`}>
+    <div className={`rounded-xl p-6 shadow-xl transition-all duration-300 hover:scale-[1.02] ${getSequenceColor(sequence.entity_type)}`}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-2">
           <span className="text-xl">{getSequenceIcon(sequence.entity_type)}</span>
