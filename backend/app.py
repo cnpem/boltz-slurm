@@ -11,17 +11,23 @@ import logging
 import datetime
 import hashlib
 import json
-from typing import List, Optional
+from typing import List, Optional, Union, Dict, Any
 import zipfile
 import io
 
-# Configure logging
+# Configuração de loggings para depuração e monitoramento de erros e demais informações
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Aqui estamos criando a aplicação do FastAPI onde definimos o titulo e a descrição da aplicação
 app = FastAPI(title="Boltz Affinity Prediction", description="Web interface for Boltz protein-ligand affinity prediction")
 
-# Add CORS middleware for React frontend
+#============== CONFIGURAÇÃO CORS ==============#
+'''
+Esta configuração adiciona middleware CORS para permitir que o frontend React se comunique com o backend FastAPI.
+
+Esse CORS é necessário porque o frontend e o backend estão rodando em portas diferentes (6868 para React e 6969 para FastAPI), e os navegadores bloqueiam requisições cross-origin por padrão por razões de segurança.
+'''
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:6868"], 
@@ -30,11 +36,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Create directories if they don't exist
+# Criamos o diretório base para armazenar os trabalhos de predição do Boltz e verificamos se ele existe.
 jobs_dir = Path("jobs")
 jobs_dir.mkdir(exist_ok=True)
 
-from typing import List, Optional, Union, Dict, Any
+
+#============== MODELOS DE DADOS PARA REQUISIÇÕES E RESPOSTAS ==============#
+# Modelos Pydantic para validação e estruturação dos dados de entrada e saída
 
 class Modification(BaseModel):
     position: int
@@ -43,10 +51,10 @@ class Modification(BaseModel):
 class SequenceEntity(BaseModel):
     entity_type: str  # protein, dna, rna, ligand
     id: Union[str, List[str]]
-    sequence: Optional[str] = None  # for protein, dna, rna
-    smiles: Optional[str] = None   # for ligand
-    ccd: Optional[str] = None      # for ligand
-    msa: Optional[str] = None      # for protein
+    sequence: Optional[str] = None  # protein, dna, rna
+    smiles: Optional[str] = None   # ligand
+    ccd: Optional[str] = None      # ligand
+    msa: Optional[str] = None      # protein
     modifications: Optional[List[Modification]] = None
     cyclic: Optional[bool] = False
 
@@ -108,39 +116,58 @@ class JobInfo(BaseModel):
     yaml_file: str
     output_dir: str
 
+
+#============== FUNÇÕES AUXILIARES ==============#
+
+# Função para greação de IDs únicos para cada trabalho
 def generate_job_id() -> str:
     """Generate a unique job ID based on timestamp and hash"""
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    # Create a short hash for uniqueness
-    hash_input = f"{timestamp}_{datetime.datetime.now().microsecond}"
-    short_hash = hashlib.md5(hash_input.encode()).hexdigest()[:8]
+    
+    # Criação de um hash curto para garantir que seja único mesmo com múltiplos jobs no mesmo segundo
+    hash_input = f"{timestamp}_{datetime.datetime.now().microsecond}" # Usando microsegundos
+    short_hash = hashlib.md5(hash_input.encode()).hexdigest()[:8] # 8 caracteres para o hash MD5
     return f"job_{timestamp}_{short_hash}"
 
+# Função que auxilia na criação do diretório do trabalho e retorna o caminho
 def create_job_directory(job_id: str) -> Path:
     """Create a job directory and return its path"""
-    job_path = jobs_dir / job_id
-    job_path.mkdir(exist_ok=True)
+    job_path = jobs_dir / job_id # Pegamos o diretório base e adicionamos o ID do trabalho
+    job_path.mkdir(exist_ok=True) # Verificamos se esse diretório já existe, se não existe, criamos
     return job_path
 
+# Funções para salvar e carregar informações do trabalho em um arquivo JSON, passamos o diretório do trabalho e um dicionário com as informações
 def save_job_info(job_dir: Path, job_info: dict):
     """Save job information to a JSON file"""
-    info_file = job_dir / "job_info.json"
+    info_file = job_dir / "job_info.json" # Pegamos a variavel do diretório e adicionamos o nomde do arquivo JSON
     with open(info_file, 'w') as f:
-        json.dump(job_info, f, indent=2, default=str)
+        json.dump(job_info, f, indent=2, default=str) # Salvamos o arquivo JSON com indentação para melhor leitura
 
+# Função para carregar as informações do trabalho a partir do arquivo JSON, ele será um dicionario
 def load_job_info(job_dir: Path) -> dict:
     """Load job information from JSON file"""
-    info_file = job_dir / "job_info.json"
+    info_file = job_dir / "job_info.json" # Pegamos o diretório do trabalho e adicionamos o nome do arquivo JSON
+    
+    # Verificamos se o arquivo existe, se existir, abrimos e carregamos o conteúdo JSON como um dicionário
     if info_file.exists():
         with open(info_file, 'r') as f:
             return json.load(f)
     return {}
 
-# React frontend serves the main page
+#============== ENDPOINTS DA API ==============#
 
+# 
 @app.get("/api/jobs")
 async def list_jobs():
-    """List all prediction jobs"""
+    """
+    Endpoint para listar todos os trabalhos
+    Criamos uma lista vazia para armazenar as informações dos trabalhos
+    Iteramos sobre os diretórios dentro do diretório base de trabalhos
+    Verificamos se o diretório começa com "job_" para garantir que é um trabalho
+    Carregamos as informações do trabalho usando a função load_job_info
+    Adicionamos as informações do trabalho à lista se forem carregadas com sucesso
+    Retorna uma lista de trabalhos com suas informações básicas
+    """
     jobs = []
     for job_dir in jobs_dir.iterdir():
         if job_dir.is_dir() and job_dir.name.startswith("job_"):
@@ -157,7 +184,11 @@ async def list_jobs():
 
 @app.get("/api/jobs/{job_id}")
 async def get_job(job_id: str):
-    """Get details of a specific job"""
+    """
+    Endpoint para obter informações detalhadas de um trabalho especifico.
+    Pegamos o diretório do trabalho com base no ID fornecido
+    Passamos esse diretório para a função load_job_info para carregar as informações do trabalho
+    """
     job_path = jobs_dir / job_id
     if not job_path.exists():
         raise HTTPException(status_code=404, detail="Job not found")
@@ -170,12 +201,21 @@ async def get_job(job_id: str):
 
 @app.get("/api/jobs/{job_id}/file/{filename}")
 async def get_job_file(job_id: str, filename: str):
-    """Get a specific file from a job directory"""
+    """
+    Endpoint para obter arquivos específicos de resultados de um trabalho de predição.
+    
+    Por segurança, só permite acesso a arquivos específicos pré-definidos:
+    - affinity_boltz_input.json: Resultados de afinidade proteína-ligante
+    - confidence_boltz_input_model_0.json: Métricas de confiança da predição  
+    - boltz_input.yaml: Arquivo de entrada usado na predição
+    
+    Busca o arquivo em múltiplas localizações possíveis pois o Boltz pode gerar
+    arquivos em diferentes estruturas de diretórios.
+    """
     job_path = jobs_dir / job_id
     if not job_path.exists():
         raise HTTPException(status_code=404, detail="Job not found")
     
-    # Allow specific result files for security
     allowed_files = [
         "affinity_boltz_input.json", 
         "confidence_boltz_input_model_0.json",
@@ -184,13 +224,14 @@ async def get_job_file(job_id: str, filename: str):
     if filename not in allowed_files:
         raise HTTPException(status_code=403, detail="File not allowed")
     
-    # Look for the file in multiple possible locations
+    # Possiveis localizações do arquivo
     possible_paths = [
         job_path / "boltz_output" / filename,
         job_path / "boltz_output" / "boltz_results_boltz_input" / "predictions" / "boltz_input" / filename,
         job_path / filename
     ]
-    
+
+    # Passaremos por todas as possíveis localizações e verificamos se o arquivo existe
     file_path = None
     for path in possible_paths:
         if path.exists():
@@ -208,20 +249,25 @@ async def get_job_file(job_id: str, filename: str):
 
 @app.post("/upload_msa")
 async def upload_msa(file: UploadFile = File(...)):
-    """Upload an MSA file and return the path"""
+    """
+    Endpoint de envio de arquivos MSA (.a3m) e retorno do caminho do arquivo salvo.
+    Criamos e verificamos se o diretório de uploads existe, se não existir, criamos.
+    Geramos um nome de arquivo único baseado no timestamp junto ao filename original e juntamos ao diretório de uploads.
+    Salvamos o arquivo enviado no caminho gerado.
+    Retornamos o nome do arquivo único e o caminho completo onde o arquivo foi salvo.
+    """
     if not file.filename.endswith('.a3m'):
         raise HTTPException(status_code=400, detail="Only .a3m files are allowed")
     
-    # Create a temporary uploads directory if it doesn't exist
     uploads_dir = Path("uploads")
     uploads_dir.mkdir(exist_ok=True)
     
-    # Generate a unique filename
+    # Gerando um nome de arquivo único
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     unique_filename = f"{timestamp}_{file.filename}"
     file_path = uploads_dir / unique_filename
-    
-    # Save the uploaded file
+
+    # Salvando o arquivo enviado
     try:
         with open(file_path, "wb") as buffer:
             content = await file.read()
