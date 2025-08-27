@@ -27,3 +27,4 @@ dist-ssr
 
 *.pyc
 backend/__pycache__/*
+**/__pycache__/*
