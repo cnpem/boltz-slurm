@@ -394,8 +394,6 @@ async def predict_boltz(request: BoltzRequest):
         """
         Os templates são arquivos de estruturas 3D já conhecidas (.cif ou .pdb) que servem como
         "moldes" ou "exemplos" para guiar o Boltz durante a predição.
-
-        É como dar uma foto de referência para um artista: "faça algo parecido com isto".
         """
         if request.templates:
             yaml_data["templates"] = []  # Criamos uma lista vazia para guardar os templates
@@ -425,8 +423,6 @@ async def predict_boltz(request: BoltzRequest):
         As propriedades definem QUE TIPO DE CÁLCULO queremos que o Boltz faça.
         Por enquanto, só temos um tipo: calcular a afinidade (quão forte é a ligação
         entre uma proteína e um ligante).
-
-        É como escolher em um cardápio: "eu quero o prato X, Y e Z".
         """
         if request.properties:
             yaml_data["properties"] = []  # Lista vazia para guardar as propriedades
