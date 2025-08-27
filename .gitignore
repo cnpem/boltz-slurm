@@ -13,8 +13,8 @@ node_modules
 dist
 dist-ssr
 *.local
-
 # Editor directories and files
+jobs
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -26,4 +26,4 @@ dist-ssr
 *.sw?
 
 *.pyc
-**/__pycache__/**
+__pycache__
