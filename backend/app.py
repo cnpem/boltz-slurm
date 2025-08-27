@@ -119,9 +119,9 @@ class JobInfo(BaseModel):
 
 #============== FUNÇÕES AUXILIARES ==============#
 
-# Função para greação de IDs únicos para cada trabalho
+# Função para geração de IDs únicos para cada trabalho
 def generate_job_id() -> str:
-    """Generate a unique job ID based on timestamp and hash"""
+    """Geração de um ID único para cada trabalho baseado no timestamp e um hash curto"""
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     
     # Criação de um hash curto para garantir que seja único mesmo com múltiplos jobs no mesmo segundo
@@ -156,7 +156,7 @@ def load_job_info(job_dir: Path) -> dict:
 
 #============== ENDPOINTS DA API ==============#
 
-# 
+
 @app.get("/api/jobs")
 async def list_jobs():
     """
@@ -279,20 +279,26 @@ async def upload_msa(file: UploadFile = File(...)):
 
 @app.post("/upload_template")
 async def upload_template(file: UploadFile = File(...)):
-    """Upload a template CIF file and return the path"""
+    """
+    Endpoint de envio de arquivos de template (.cif ou .pdb) e retorna o caminho do arquivo salvo.
+    Criamos o diretório de uploads se ele não existir para armazenar os envios.
+    Fazemos o processo de geração de um nome de arquivo único baseado no timestamp e no nome original do arquivo.
+    Salvamos o arquivo enviado no caminho gerado.
+    Retornamos o nome do arquivo único e o caminho completo onde o arquivo foi salvo.
+    """
     if not (file.filename.endswith('.cif') or file.filename.endswith('.pdb')):
         raise HTTPException(status_code=400, detail="Only .cif and .pdb files are allowed")
     
-    # Create a temporary uploads directory if it doesn't exist
+    # Criando o diretório de uploads se não existir
     uploads_dir = Path("uploads")
     uploads_dir.mkdir(exist_ok=True)
-    
-    # Generate a unique filename
+
+    # Gerando um nome de arquivo único
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     unique_filename = f"{timestamp}_{file.filename}"
     file_path = uploads_dir / unique_filename
-    
-    # Save the uploaded file
+
+    # Salvando o arquivo enviado
     try:
         with open(file_path, "wb") as buffer:
             content = await file.read()
@@ -304,28 +310,34 @@ async def upload_template(file: UploadFile = File(...)):
 
 @app.post("/predict", response_model=PredictionResponse)
 async def predict_boltz(request: BoltzRequest):
-    """Generate Boltz YAML and run prediction with proper job management"""
-    # Generate job ID and create directory
+    """
+    Endpoint para iniciar a predição de afinidade usando o Boltz.
+    Recebe uma requisição com a estrutura definida em BoltzRequest(classe criada na linha 91).
+    Gera um ID único para o trabalho e cria um diretório para armazenar os arquivos do trabalho.
+    Convertemos a sequencia de entrada em estrutura YAML esperado pelo Boltz.
+    """
+    # Gerando ID do trabalho e criando diretório
     job_id = generate_job_id()
     job_path = create_job_directory(job_id)
     timestamp = datetime.datetime.now().isoformat()
     
     try:
-        # Convert request to YAML structure
+        # Vamos transformar a requisição em um dicionário no formato esperado pelo Boltz
         yaml_data = {
-            "version": request.version,
-            "sequences": []
+            "version": request.version, #P pegamos a versão da requisição
+            "sequences": [] # Inicializamos a lista de sequências vazia
         }
         
-        # Process sequences
+        # Loop para adicionar cada entidade de sequência ao YAML
         for seq in request.sequences:
+            # Dicionario base para a entidade
             seq_dict = {
                 seq.entity_type: {
                     "id": seq.id
                 }
             }
             
-            # Add sequence-specific fields
+            # Adicionando ao seq_dict os campos opcionais se eles estiverem presentes
             if seq.sequence:
                 seq_dict[seq.entity_type]["sequence"] = seq.sequence
             if seq.smiles:
@@ -340,13 +352,18 @@ async def predict_boltz(request: BoltzRequest):
                 ]
             if seq.cyclic:
                 seq_dict[seq.entity_type]["cyclic"] = seq.cyclic
-                
+
+            # Após montar o dicionário da sequência, adicionamos à lista de sequências no YAML
             yaml_data["sequences"].append(seq_dict)
-        
-        # Add constraints if provided
+
+        # Adicionando as restrições, se fornecidas
         if request.constraints:
+            # Vamos criar no yaml_data o campo "constraints". De começo é uma lista vazia
             yaml_data["constraints"] = []
+
+            # Loop para adicionar cada restrição ao YAML
             for constraint in request.constraints:
+                # Dentro de cada restrição, verificamos qual tipo de restrição está presente e montamos o dicionário (constraint_dict) correspondente
                 constraint_dict = {}
                 if constraint.bond:
                     constraint_dict["bond"] = {
@@ -372,49 +389,133 @@ async def predict_boltz(request: BoltzRequest):
                 
                 if constraint_dict:
                     yaml_data["constraints"].append(constraint_dict)
-        
-        # Add templates if provided
+
+        #============== PROCESSAMENTO DOS TEMPLATES (ESTRUTURAS DE REFERÊNCIA) ==============#
+        """
+        Os templates são arquivos de estruturas 3D já conhecidas (.cif ou .pdb) que servem como
+        "moldes" ou "exemplos" para guiar o Boltz durante a predição.
+
+        É como dar uma foto de referência para um artista: "faça algo parecido com isto".
+        """
         if request.templates:
-            yaml_data["templates"] = []
+            yaml_data["templates"] = []  # Criamos uma lista vazia para guardar os templates
+            
+            # Vamos processar cada template enviado pelo usuário
             for template in request.templates:
-                template_dict = {"cif": template.cif}
+                # Começamos com o arquivo da estrutura (obrigatório)
+                template_dict = {"cif": template.cif}  # O arquivo da estrutura 3D
+                
+                # Adicionamos informações extras se o usuário forneceu:
+                
+                # chain_id: qual cadeia (parte) da proteína usar como referência
+                # Ex: se uma proteína tem várias partes (A, B, C), usar apenas a parte A
                 if template.chain_id:
                     template_dict["chain_id"] = template.chain_id
+                
+                # template_id: nome/código específico para identificar este template
+                # Ex: "1ABC", "minha_estrutura_favorita"
                 if template.template_id:
                     template_dict["template_id"] = template.template_id
+                
+                # Adicionamos este template à nossa lista
                 yaml_data["templates"].append(template_dict)
-        
-        # Add properties if provided
+
+        #============== PROCESSAMENTO DAS PROPRIEDADES (O QUE QUEREMOS CALCULAR) ==============#
+        """
+        As propriedades definem QUE TIPO DE CÁLCULO queremos que o Boltz faça.
+        Por enquanto, só temos um tipo: calcular a afinidade (quão forte é a ligação
+        entre uma proteína e um ligante).
+
+        É como escolher em um cardápio: "eu quero o prato X, Y e Z".
+        """
         if request.properties:
-            yaml_data["properties"] = []
+            yaml_data["properties"] = []  # Lista vazia para guardar as propriedades
+            
+            # Processamos cada propriedade solicitada
             for prop in request.properties:
-                prop_dict = {}
+                prop_dict = {}  # Dicionário vazio para esta propriedade específica
+                
+                # Se o usuário quer calcular afinidade (força da ligação)
                 if prop.affinity:
+                    # Especificamos qual molécula é o "ligante" (geralmente a menor molécula)
                     prop_dict["affinity"] = {"binder": prop.affinity.binder}
-                if prop_dict:
+                
+                # Só adicionamos à lista se realmente há algo para calcular
+                if prop_dict:  # Se não está vazio
                     yaml_data["properties"].append(prop_dict)
-        
-        # Save YAML file in job directory with custom formatting for contacts
-        yaml_file = job_path / "boltz_input.yaml"
-        
-        # Custom YAML formatting to ensure contacts use flow style
+
+        #============== SALVANDO O ARQUIVO DE CONFIGURAÇÃO ==============#
+        """
+        Agora vamos salvar todas essas informações em um arquivo YAML.
+        O YAML é como uma "receita" que o Boltz vai ler para saber exatamente
+        o que fazer com suas proteínas e ligantes.
+        """
+        yaml_file = job_path / "boltz_input.yaml"  # Nome do arquivo de configuração
+
+        #============== FORMATAÇÃO PERSONALIZADA DO ARQUIVO ==============#
+        """
+        Criamos uma classe especial para deixar o arquivo YAML mais bonito e organizado.
+        É como ter um formatador de texto que deixa o documento bem arrumado.
+        """
         class CustomDumper(yaml.SafeDumper):
+            """
+            Esta é nossa classe personalizada para escrever o arquivo YAML.
+            Ela herda todas as funcionalidades básicas do YAML, mas permite
+            que façamos algumas personalizações na aparência final.
+            """
             def write_line_break(self, data=None):
+                """
+                Controla como as quebras de linha são feitas no arquivo.
+                Por enquanto, mantemos o comportamento padrão.
+                """
                 super().write_line_break(data)
 
         def represent_list(dumper, data):
-            # Check if this is a contacts array (list of lists with mixed types)
+            """
+            Esta função decide como as listas devem aparecer no arquivo YAML.
+            
+            Algumas listas ficam melhor "espalhadas" (uma linha por item):
+            - item1
+            - item2
+            - item3
+            
+            Outras ficam melhor "compactas" (tudo numa linha):
+            [item1, item2, item3]
+            
+            A regra é simples:
+            - Se é uma lista de coordenadas/contatos: formato compacto
+            - Outras listas: formato espalhado (mais fácil de ler)
+            """
+            # Verificamos se é uma lista de listas com pelo menos 2 elementos
+            # (isso geralmente indica coordenadas ou contatos)
             if (isinstance(data, list) and len(data) > 0 and 
                 isinstance(data[0], list) and len(data[0]) >= 2):
-                # This looks like contacts - use flow style
+                
+                # Formato compacto: [[A, 10, CA], [B, 20, CB]]
                 return dumper.represent_sequence('tag:yaml.org,2002:seq', data, flow_style=True)
+            
+            # Formato espalhado para outras listas:
+            # - item1
+            # - item2
             return dumper.represent_sequence('tag:yaml.org,2002:seq', data, flow_style=False)
 
+        # Registramos nossa função personalizada para formatar listas
         CustomDumper.add_representer(list, represent_list)
-        
+
+        # Finalmente, salvamos o arquivo YAML com nossa formatação personalizada
         with open(yaml_file, 'w') as f:
             yaml.dump(yaml_data, f, Dumper=CustomDumper, default_flow_style=False)
-        
+
+        #============== CRIAÇÃO DO DIRETÓRIO DE RESULTADOS ==============#
+        """
+        Criamos uma pasta específica onde o Boltz vai salvar todos os resultados:
+        - Estruturas 3D geradas
+        - Valores de afinidade calculados
+        - Relatórios de confiança
+        - Logs de execução
+
+        É como preparar uma gaveta vazia e bem organizada antes de começar um projeto.
+        """
         # Create output directory for Boltz results
         output_dir = job_path / "boltz_output"
         output_dir.mkdir(exist_ok=True)
