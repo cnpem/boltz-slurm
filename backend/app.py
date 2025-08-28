@@ -411,7 +411,7 @@ async def predict_boltz(request: BoltzRequest):
                     template_dict["chain_id"] = template.chain_id
                 
                 # template_id: nome/código específico para identificar este template
-                # Ex: "1ABC", "minha_estrutura_favorita"
+                # Ex: "1ABC"
                 if template.template_id:
                     template_dict["template_id"] = template.template_id
                 
@@ -509,14 +509,12 @@ async def predict_boltz(request: BoltzRequest):
         - Valores de afinidade calculados
         - Relatórios de confiança
         - Logs de execução
-
-        É como preparar uma gaveta vazia e bem organizada antes de começar um projeto.
         """
-        # Create output directory for Boltz results
+        # Criando o diretório de saída para os resultados do Boltz
         output_dir = job_path / "boltz_output"
         output_dir.mkdir(exist_ok=True)
         
-        # Extract summary info for job tracking
+        # Extraímos um resumo das entidades para salvar nas informações do trabalho como smiles, ids e tamanho da sequência
         entities_summary = []
         for seq in request.sequences:
             entity_info = {
@@ -524,36 +522,36 @@ async def predict_boltz(request: BoltzRequest):
                 "id": seq.id if isinstance(seq.id, str) else seq.id[0],
             }
             if seq.sequence:
-                entity_info["sequence_length"] = len(seq.sequence)
+                entity_info["sequence_length"] = len(seq.sequence) # Tamanho da sequência
             if seq.smiles:
-                entity_info["smiles"] = seq.smiles
+                entity_info["smiles"] = seq.smiles # SMILES do ligante
             if seq.ccd:
-                entity_info["ccd"] = seq.ccd
-            entities_summary.append(entity_info)
+                entity_info["ccd"] = seq.ccd # CCD do ligante
+            entities_summary.append(entity_info) # Adicionamos o dicionário da entidade à lista
         
-        # Save initial job info
+        # Salvamos as informações iniciais do trabalho
         job_info = {
-            "job_id": job_id,
-            "timestamp": timestamp,
-            "status": "running",
-            "entities": entities_summary,
-            "has_affinity": bool(request.properties and any(p.affinity for p in request.properties)),
-            "job_dir": str(job_path),
-            "yaml_file": str(yaml_file),
-            "output_dir": str(output_dir),
-            "command": ""
+            "job_id": job_id, # criado na linha 487
+            "timestamp": timestamp, # criado na linha 488
+            "status": "running", # status inicial
+            "entities": entities_summary, # resumo das entidades
+            "has_affinity": bool(request.properties and any(p.affinity for p in request.properties)), # se há pedido de afinidade
+            "job_dir": str(job_path), # diretório do trabalho
+            "yaml_file": str(yaml_file), # arquivo YAML criado
+            "output_dir": str(output_dir), # diretório de resultados
+            "command": "" # comando que será executado (preenchido depois)
         }
-        
-        # Add job name if provided
+
+        # Adicionamos o nome do trabalho, se fornecido
         if request.job_name:
             job_info["job_name"] = request.job_name
         save_job_info(job_path, job_info)
-        
-        # Run the Boltz prediction command with output directory
-        # Since we're running from the job directory, use relative paths
+
+        # Executamos o comando de previsão do Boltz com o diretório de saída
+        # Como estamos executando a partir do diretório do trabalho, usamos caminhos relativos
         cmd = ["boltz", "predict", "boltz_input.yaml", "--out_dir", "boltz_output"]
-        
-        # Check if any sequence has MSA files - if so, don't use MSA server
+
+        # Verificamos se alguma sequência tem arquivos MSA - se sim, não usamos o servidor MSA
         has_msa_files = any(seq.msa and seq.msa.strip() and seq.msa != "empty" for seq in request.sequences)
         if not has_msa_files:
             cmd.append("--use_msa_server")
@@ -562,29 +560,31 @@ async def predict_boltz(request: BoltzRequest):
 
         job_info["command"] = " ".join(cmd)
         logger.info(f"Running command for job {job_id}: {' '.join(cmd)}")
-        
-        # Update job info with command
+
+        # Atualiza as informações do trabalho com o comando com a função save_job_info (linha 140)
         save_job_info(job_path, job_info)
         
+        # Executamos o comando com o subprocess, capturando a saída
         result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=600,  # 10 minutes timeout
-            cwd=str(job_path)  # Run command from job directory
+            cmd, # Comando a ser executado criado anteriormente
+            capture_output=True, # Mostramos a saída padrão e de erro setando como True
+            text=True, # Capturamos a saída como texto
+            timeout=600,  # 10 minutos de duração máxima
+            cwd=str(job_path)  # Executa o comando a partir do diretório do trabalho
         )
-        
-        # Generate YAML content for display
+
+        # Gera o conteúdo YAML para exibição
         yaml_content = yaml.dump(yaml_data, default_flow_style=False)
-        
-        # Update job status based on result
+
+        # Atualiza o status do trabalho com base no resultado da execução
         if result.returncode == 0:
-            job_info["status"] = "completed"
+            job_info["status"] = "completed" # mudamos o status para completed
             job_info["completion_time"] = datetime.datetime.now().isoformat()
-            job_info["stdout"] = result.stdout
-            job_info["stderr"] = result.stderr
-            save_job_info(job_path, job_info)
+            job_info["stdout"] = result.stdout # salvamos a saída padrão
+            job_info["stderr"] = result.stderr # salvamos a saída de erro
+            save_job_info(job_path, job_info) # salvamos as informações atualizadas do trabalho
             
+            # Retornamos a resposta com sucesso chamando a classe PredictionResponse (linha 72)
             return PredictionResponse(
                 success=True,
                 message=f"Prediction completed successfully! Job ID: {job_id}",
@@ -595,6 +595,7 @@ async def predict_boltz(request: BoltzRequest):
                 timestamp=timestamp
             )
         else:
+            # Se o comando falhou, atualizamos o status para "failed" e salvamos a saída de erro
             job_info["status"] = "failed"
             job_info["completion_time"] = datetime.datetime.now().isoformat()
             job_info["stdout"] = result.stdout
@@ -602,6 +603,7 @@ async def predict_boltz(request: BoltzRequest):
             job_info["return_code"] = result.returncode
             save_job_info(job_path, job_info)
             
+            # Retornamos a resposta indicando falha na predição
             return PredictionResponse(
                 success=False,
                 message=f"Prediction failed with return code {result.returncode}. Job ID: {job_id}",
@@ -611,22 +613,48 @@ async def predict_boltz(request: BoltzRequest):
                 job_dir=str(job_path),
                 timestamp=timestamp
             )
-                
+
+
+    #============== TRATAMENTO DE TIMEOUT (TEMPO LIMITE EXCEDIDO) ==============#
     except subprocess.TimeoutExpired:
+        """
+        Este bloco é executado quando o comando do Boltz demora mais de 10 minutos para terminar.
+        
+        O timeout é uma proteção importante porque:
+        - Evita que predições travem indefinidamente
+        - Libera recursos do servidor
+        - Informa ao usuário que algo deu errado
+        """
+        # Atualizamos o status do trabalho para "timeout" (tempo esgotado)
         job_info["status"] = "timeout"
+        
+        # Marcamos quando o timeout aconteceu
         job_info["completion_time"] = datetime.datetime.now().isoformat()
+        
+        # Salvamos uma mensagem explicando o que aconteceu
         job_info["error"] = "Prediction timed out after 10 minutes"
+        
+        # Salvamos essas informações no arquivo do trabalho
         save_job_info(job_path, job_info)
         
+        # Retornamos uma resposta informando que deu timeout
         return PredictionResponse(
-            success=False,
+            success=False,  # Indica que não teve sucesso
             message=f"Prediction timed out after 10 minutes. Job ID: {job_id}",
             output="The prediction process took too long and was terminated.",
             job_id=job_id,
             job_dir=str(job_path),
             timestamp=timestamp
         )
+    
+    #============== TRATAMENTO DE OUTROS ERROS ==============#
     except Exception as e:
+        """
+        Trata qualquer outro erro inesperado que possa ocorrer durante o processo.
+        Isso é importante para garantir que o sistema não quebre silenciosamente
+        e que o usuário receba uma mensagem clara sobre o que aconteceu.
+        """
+
         logger.error(f"Error during prediction for job {job_id}: {str(e)}")
         
         job_info["status"] = "error"
@@ -643,35 +671,50 @@ async def predict_boltz(request: BoltzRequest):
             timestamp=timestamp
         )
 
+
+#============== ENDPOINTS PARA VISUALIZAÇÃO DOS RESULTADOS ==============#
 @app.get("/health")
 async def health_check():
-    """Health check endpoint"""
+    """Endpoint simples para checar se o serviço está rodando"""
     return {"status": "healthy"}
 
 @app.get("/api/jobs/{job_id}/results")
 async def get_job_results(job_id: str):
-    """Get formatted prediction results for a job"""
+    """
+    Obter resultados formatados da predição para um trabalho.
+    Procuramos os arquivos de resultados em múltiplas localizações possíveis
+    pois o Boltz pode gerar arquivos em diferentes estruturas de diretórios.
+    Carregamos e formatamos os resultados de afinidade e confiança, se disponíveis.
+    Retornamos um dicionário com as informações do trabalho e os resultados formatados.
+    """
+
+    # Caminho do trabalho e verificação de existência
     job_path = jobs_dir / job_id
     if not job_path.exists():
         raise HTTPException(status_code=404, detail="Job not found")
-    
-    # Load job info first
+
+    # Carregamos as informações do trabalho
     job_info = load_job_info(job_path)
     if not job_info:
         raise HTTPException(status_code=404, detail="Job info not found")
     
+    # Inicializamos o dicionário de resultados que contem as informações do trabalho e os resultados
     results = {
-        "job_info": job_info,
-        "affinity_results": None,
-        "confidence_results": None
+        "job_info": job_info, # Informações do trabalho
+        "affinity_results": None, # Resultados de afinidade formatados
+        "confidence_results": None # Resultados de confiança formatados
     }
-    
-    # Look for affinity results
+
+    # Procuramos os resultados de afinidade
+    # É possível que o arquivo esteja em diferentes locais dependendo da versão do Boltz
+    # Por isso, verificamos múltiplos caminhos possíveis
     affinity_paths = [
         job_path / "boltz_output" / "affinity_boltz_input.json",
         job_path / "boltz_output" / "boltz_results_boltz_input" / "predictions" / "boltz_input" / "affinity_boltz_input.json"
     ]
-    
+
+
+    # Loop para encontrar e carregar o arquivo de afinidade
     for path in affinity_paths:
         if path.exists():
             try:
@@ -681,13 +724,14 @@ async def get_job_results(job_id: str):
                 break
             except Exception as e:
                 logger.warning(f"Failed to load affinity results from {path}: {e}")
-    
-    # Look for confidence results
+
+    # Procuramos os resultados de confiança
     confidence_paths = [
         job_path / "boltz_output" / "confidence_boltz_input_model_0.json",
         job_path / "boltz_output" / "boltz_results_boltz_input" / "predictions" / "boltz_input" / "confidence_boltz_input_model_0.json"
     ]
     
+    # Loop para encontrar e carregar o arquivo de confiança
     for path in confidence_paths:
         if path.exists():
             try:
@@ -700,190 +744,289 @@ async def get_job_results(job_id: str):
     
     return results
 
+#============== FUNÇÃO AUXILIAR PARA FORMATAÇÃO DOS RESULTADOS ==============#
+
 def format_affinity_results(data):
-    """Format affinity results for display"""
-    if not data or not isinstance(data, dict):
-        return None
+    """
+    Formata os resultados de afinidade para exibição na interface do usuário.
     
+    Esta função pega os dados brutos de afinidade do Boltz e os organiza de forma
+    mais fácil de entender e exibir na interface web.
+    
+    É como pegar um relatório técnico complexo e criar um resumo simples para mostrar
+    ao usuário, mantendo também o relatório completo disponível se necessário.
+
+    Args:
+        data: Dicionário com os dados brutos de afinidade do Boltz
+        
+    Returns:
+        Dicionário formatado com resumo e dados detalhados, ou None se dados inválidos
+    """
+    # Verificamos se os dados são válidos (não vazios e no formato correto)
+    if not data or not isinstance(data, dict):
+        return None  # Se não há dados válidos, retornamos None
+    
+    # Criamos um dicionário organizado com duas seções:
     formatted = {
-        "summary": {},
-        "detailed": data
+        "summary": {},    # Informações principais (resumo para a interface)
+        "detailed": data  # Dados completos originais (para usuários avançados)
     }
     
-    # Extract key metrics if available
+    # Extraímos as métricas principais se estiverem disponíveis nos dados
+    
+    # Afinidade de ligação: o valor principal que indica quão forte é a ligação
+    # Entre a proteína e o ligante (geralmente em kcal/mol ou similar)
     if "affinity" in data:
         formatted["summary"]["binding_affinity"] = data["affinity"]
     
+    # Confiança da afinidade: quão confiável é o valor calculado (0-1 ou 0-100%)
+    # Indica se podemos confiar no resultado da predição
     if "affinity_confidence" in data:
         formatted["summary"]["confidence"] = data["affinity_confidence"]
         
+    # Unidades de medida: explica em que unidade o valor está sendo mostrado
+    # Ex: "kcal/mol", "kJ/mol", "pKd", etc.
     if "units" in data:
         formatted["summary"]["units"] = data["units"]
     
+    # Retornamos o dicionário formatado com resumo e dados detalhados
     return formatted
 
+#============== FUNÇÂO AUXILIAR PARA FORMATAÇÃO DOS RESULTADOS DE CONFIANÇA ==============#
+
 def format_confidence_results(data):
-    """Format confidence results for display"""
+    """
+    Basicamente, esta função pega os dados brutos de confiança do Boltz e os organiza de forma
+    É práticamente que nem o format_affinity_results, mas para confiança.
+    mais fácil de entender e exibir na interface web.
+    """
+    # Verificamos se os dados são válidos (não vazios e no formato correto)
     if not data or not isinstance(data, dict):
         return None
     
+    # Criamos um dicionário organizado com duas seções:
     formatted = {
-        "summary": {},
-        "detailed": data
+        "summary": {}, # Informações principais (resumo para a interface)
+        "detailed": data # Dados completos originais (para usuários avançados)
     }
-    
-    # Extract key confidence metrics
+
+    # Extraímos as métricas principais de confiança
+    # Verificamos se o campo "confidence" está presente nos dados
     if "confidence" in data:
+        # Extraímos os dados de confiança
         conf_data = data["confidence"]
+        # Verificamos se é um dicionário (com várias métricas) ou um valor simples
         if isinstance(conf_data, dict):
-            # Get overall confidence if available
+            # Obtemos a confiança geral, se disponível
             if "overall" in conf_data:
                 formatted["summary"]["overall_confidence"] = conf_data["overall"]
-            
-            # Get per-residue confidence statistics
+
+            # Obtemos estatísticas de confiança por resíduo, se disponíveis
             if "per_residue" in conf_data:
+                # Calculamos a média, mínimo e máximo da confiança por resíduo
                 per_res = conf_data["per_residue"]
                 if isinstance(per_res, list) and per_res:
-                    formatted["summary"]["mean_confidence"] = sum(per_res) / len(per_res)
-                    formatted["summary"]["min_confidence"] = min(per_res)
-                    formatted["summary"]["max_confidence"] = max(per_res)
+                    formatted["summary"]["mean_confidence"] = sum(per_res) / len(per_res) # Média
+                    formatted["summary"]["min_confidence"] = min(per_res) # Mínimo
+                    formatted["summary"]["max_confidence"] = max(per_res) # Máximo
         else:
-            formatted["summary"]["confidence_score"] = conf_data
+            formatted["summary"]["confidence_score"] = conf_data # Valor simples de confiança
     
     return formatted
 
+#============== ENDPOINTS PARA DOWNLOAD DOS RESULTADOS ==============#
 @app.get("/api/jobs/{job_id}/pdb")
 async def get_job_pdb(job_id: str):
-    """Get the PDB file for a specific job"""
+    """
+    Endpoint para baixar o arquivo PDB (estrutura 3D) de um trabalho específico.
+    
+    O arquivo PDB contém a estrutura 3D predita pelo Boltz em formato padrão
+    que pode ser visualizado em programas como PyMOL, ChimeraX, ou na web.
+    
+    É como baixar uma "foto 3D" da molécula que o Boltz criou.
+    
+    Args:
+        job_id: ID único do trabalho para buscar o arquivo PDB
+        
+    Returns:
+        FileResponse: Arquivo PDB para download direto no navegador
+        
+    Raises:
+        HTTPException 404: Se o trabalho ou arquivo PDB não for encontrado
+    """
+    # Verificamos se o diretório do trabalho existe
     job_path = jobs_dir / job_id
     if not job_path.exists():
         raise HTTPException(status_code=404, detail="Job not found")
     
-    # Look for PDB files in multiple possible locations
+    # Procuramos arquivos PDB em múltiplas localizações possíveis
+    # O Boltz pode salvar o arquivo em diferentes estruturas de pastas
+    # dependendo da versão e configuração
     possible_paths = [
+        # Localização direta na pasta de output
         job_path / "boltz_output" / "boltz_input.pdb",
+        # Localização em estrutura de pastas mais complexa (versões mais novas)
         job_path / "boltz_output" / "boltz_results_boltz_input" / "predictions" / "boltz_input" / "boltz_input.pdb",
+        # Arquivo com sufixo model_0 (quando há múltiplos modelos)
         job_path / "boltz_output" / "boltz_results_boltz_input" / "predictions" / "boltz_input" / "boltz_input_model_0.pdb",
+        # Localização alternativa com model_0
         job_path / "boltz_output" / "boltz_input_model_0.pdb"
     ]
-    # Also check for any .pdb files in the output directory
+    
+    # Também procuramos por qualquer arquivo .pdb no diretório de output
+    # Isso garante que encontremos o arquivo mesmo se estiver em local inesperado
     output_dir = job_path / "boltz_output"
     if output_dir.exists():
+        # rglob("*.pdb") busca recursivamente por todos os arquivos .pdb
         for pdb_file in output_dir.rglob("*.pdb"):
             possible_paths.append(pdb_file)
     
+    # Procuramos o primeiro arquivo PDB que existe
     pdb_file_path = None
     for path in possible_paths:
         if path.exists():
             pdb_file_path = path
-            break
+            break  # Paramos na primeira ocorrência encontrada
     
+    # Se não encontramos nenhum arquivo PDB, retornamos erro 404
     if not pdb_file_path:
         raise HTTPException(status_code=404, detail="PDB file not found")
     
+    # Retornamos o arquivo para download
     return FileResponse(
-        pdb_file_path, 
-        media_type="chemical/x-pdb",
-        filename=f"{job_id}.pdb"
+        pdb_file_path,                    # Caminho do arquivo encontrado
+        media_type="chemical/x-pdb",      # Tipo MIME específico para arquivos PDB
+        filename=f"{job_id}.pdb"          # Nome do arquivo no download
     )
 
+#============== ENDPOINT PARA DOWNLOAD DE ARQUIVO ZIP COM TODOS OS RESULTADOS ==============#
 @app.get("/api/jobs/{job_id}/download")
 async def download_job_archive(job_id: str):
-    """Download a ZIP archive containing all job files"""
+    """
+    Endpoint para baixar um arquivo ZIP contendo todos os arquivos de um trabalho específico.
+    O arquivo ZIP inclui:
+    - Informações do trabalho (job_info.json)
+    - Arquivo de entrada YAML (boltz_input.yaml)
+    - Arquivo PDB da estrutura predita (se disponível)
+    - Resultados de afinidade e confiança (se disponíveis)
+    - Resultados formatados (se disponíveis)
+    - Outros arquivos importantes do diretório de saída (logs, etc.)
+    """
+    # Existencia do diretório do trabalho
     job_path = jobs_dir / job_id
     if not job_path.exists():
         raise HTTPException(status_code=404, detail="Job not found")
     
-    # Load job info
+    # Carregamos as informações do trabalho para incluir no ZIP
     job_info = load_job_info(job_path)
     if not job_info:
         raise HTTPException(status_code=404, detail="Job info not found")
     
-    # Create ZIP file in memory
+    # Criando o arquivo ZIP na memória usando BytesIO -> para não criar arquivos temporários no disco
     zip_buffer = io.BytesIO()
     
     try:
+        # Criamos o arquivo ZIP e adicionamos os arquivos necessários
+        # Usamos ZIP_DEFLATED para compressão
+        # Ele cria o arquivo zip no buffer de memória
         with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-            # Add job info as JSON
-            job_info_json = json.dumps(job_info, indent=2, default=str)
-            zip_file.writestr(f"{job_id}_info.json", job_info_json)
-            
-            # Add YAML input file
+            # Transformamos o job_info em JSON formatado e adicionamos ao ZIP
+            job_info_json = json.dumps(job_info, indent=2, default=str) # Convertendo para JSON formatado
+            zip_file.writestr(f"{job_id}_info.json", job_info_json)     # Adicionando ao ZIP
+
+            # Adicionamos o arquivo de entrada YAML
             yaml_file = job_path / "boltz_input.yaml"
             if yaml_file.exists():
-                zip_file.write(yaml_file, f"{job_id}_input.yaml")
-            
-            # Add PDB file if available
+                zip_file.write(yaml_file, f"{job_id}_input.yaml") # Adicionando ao ZIP
+
+            # Vamos procurar o arquivo PDB em múltiplas localizações possíveis novamente
+            # Isso garante que incluímos o arquivo PDB correto no ZIP
             pdb_paths = [
                 job_path / "boltz_output" / "boltz_input.pdb",
                 job_path / "boltz_output" / "boltz_results_boltz_input" / "predictions" / "boltz_input" / "boltz_input.pdb",
                 job_path / "boltz_output" / "boltz_results_boltz_input" / "predictions" / "boltz_input" / "boltz_input_model_0.pdb",
                 job_path / "boltz_output" / "boltz_input_model_0.pdb"
             ]
-            
-            # Also check for any .pdb files in the output directory
+
+            # Também verificamos se há arquivos .pdb no diretório de saída e adicionamos à lista
             output_dir = job_path / "boltz_output"
             if output_dir.exists():
                 for pdb_file in output_dir.rglob("*.pdb"):
                     pdb_paths.append(pdb_file)
             
-            pdb_added = False
-            for pdb_path in pdb_paths:
-                if pdb_path.exists() and not pdb_added:
-                    zip_file.write(pdb_path, f"{job_id}_structure.pdb")
-                    pdb_added = True
-                    break
+            pdb_added = False # Flag para garantir que só adicionamos um arquivo PDB
             
-            # Add results files
+            # Loop para encontrar e adicionar o primeiro arquivo PDB existente
+            for pdb_path in pdb_paths:
+                # Se o arquivo existe e ainda não adicionamos nenhum PDB
+                if pdb_path.exists() and not pdb_added:
+                    zip_file.write(pdb_path, f"{job_id}_structure.pdb") # Adicionando ao ZIP
+                    pdb_added = True # Marcamos que já adicionamos um PDB
+                    break # Paramos na primeira ocorrência encontrada
+
+            # Verificamos múltiplos caminhos possíveis, usando o job_id para nomear os arquivos no ZIP
             result_files = [
                 ("affinity_boltz_input.json", f"{job_id}_affinity_results.json"),
                 ("confidence_boltz_input_model_0.json", f"{job_id}_confidence_results.json")
             ]
             
+            # Loop para encontrar e adicionar os arquivos de resultados, se existirem
             for result_file, archive_name in result_files:
                 possible_paths = [
                     job_path / "boltz_output" / result_file,
                     job_path / "boltz_output" / "boltz_results_boltz_input" / "predictions" / "boltz_input" / result_file
                 ]
                 
+                # E um loop dentro do outro para verificar cada caminho possível e adicionar o primeiro que existir ao ZIP
                 for path in possible_paths:
                     if path.exists():
                         zip_file.write(path, archive_name)
                         break
-            
-            # Add formatted results
+
+            # Adicionamos os resultados formatados se disponíveis (chamando a função get_job_results)
+            # Isso inclui os resultados de afinidade e confiança formatados
+            # Usamos um bloco try-except para evitar falhas caso algo dê errado
             try:
                 response = await get_job_results(job_id)
                 formatted_results = json.dumps(response, indent=2, default=str)
                 zip_file.writestr(f"{job_id}_formatted_results.json", formatted_results)
             except:
-                pass  # Skip if formatted results not available
-            
-            # Add any other important files from the output directory
+                pass  # Se falhar, apenas ignoramos e seguimos em frente
+
+            # Adicionamos quaisquer outros arquivos importantes do diretório de saída
             if output_dir.exists():
                 for file_path in output_dir.rglob("*.log"):
                     if file_path.is_file():
-                        relative_path = file_path.relative_to(job_path)
-                        zip_file.write(file_path, f"{job_id}_{relative_path.name}")
+                        relative_path = file_path.relative_to(job_path) # Caminho relativo para manter a estrutura
+                        zip_file.write(file_path, f"{job_id}_{relative_path.name}") # Adicionando ao ZIP com prefixo do job_id
         
-        zip_buffer.seek(0)
+        zip_buffer.seek(0) # Voltamos ao início do buffer para leitura
         
-        # Return the ZIP file
+        # Definimos o nome do arquivo ZIP para download
+        # Usamos o nome do trabalho se disponível, senão o job_id
         job_name = job_info.get('job_name', job_id)
         filename = f"{job_name}_complete.zip" if job_info.get('job_name') else f"{job_id}_complete.zip"
         
-        # Create a temporary file for the ZIP
-        import tempfile
+        # Criamos um arquivo temporário para servir o conteúdo do ZIP
+        # Isso é necessário porque FileResponse precisa de um caminho de arquivo real
+        # Usamos delete=False para manter o arquivo após fechá-lo
+        import tempfile # Importamos a biblioteca tempfile para criar arquivos temporários
         with tempfile.NamedTemporaryFile(delete=False, suffix='.zip') as tmp_file:
             tmp_file.write(zip_buffer.getvalue())
             tmp_file_path = tmp_file.name
         
+        # Retornamos o arquivo ZIP para download no navegador
+        # Usamos FileResponse para servir o arquivo temporário
+        # O arquivo será baixado com o nome definido acima
         return FileResponse(
-            path=tmp_file_path,
-            media_type="application/zip",
-            filename=filename
+            path=tmp_file_path,               # Caminho do arquivo temporário
+            media_type="application/zip",     # Tipo MIME para arquivos ZIP
+            filename=filename                 # Nome do arquivo no download
         )
         
+    # Em caso de qualquer erro durante o processo, logamos o erro e retornamos um HTTP 500
+    # Isso garante que o usuário saiba que algo deu errado
+    # Usamos HTTPException para retornar o erro apropriado
     except Exception as e:
         logger.error(f"Failed to create ZIP archive for job {job_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to create download archive: {str(e)}")
