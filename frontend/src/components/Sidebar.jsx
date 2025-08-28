@@ -1,6 +1,8 @@
 import { useState } from 'react'
 
+// Define o componente Sidebar que recebe as props 
 const Sidebar = ({ jobs, selectedJobId, onSelectJob, onNewJob, onRefreshJobs, onHome }) => {
+  // Funcao para formatar a data e hora
   const formatDate = (timestamp) => {
     const date = new Date(timestamp)
     return {
@@ -9,6 +11,9 @@ const Sidebar = ({ jobs, selectedJobId, onSelectJob, onNewJob, onRefreshJobs, on
     }
   }
 
+  // Funcao para obter um resumo do job
+  // Retorna uma string com o resumo do job
+  // Informando a quantidade de proteínas e ligantes
   const getJobSummary = (job) => {
     const entities = job.entities || []
     const proteinCount = entities.filter(e => e.type === 'protein').length
@@ -16,6 +21,8 @@ const Sidebar = ({ jobs, selectedJobId, onSelectJob, onNewJob, onRefreshJobs, on
     return `${proteinCount} protein(s), ${ligandCount} ligand(s)`
   }
 
+  // Funcao para obter a cor do status do job
+  // Recebe o status e atribui um estilo correspondente
   const getStatusColor = (status) => {
     switch (status) {
       case 'completed': return 'text-green-800 bg-green-200 border-green-400'
@@ -27,10 +34,14 @@ const Sidebar = ({ jobs, selectedJobId, onSelectJob, onNewJob, onRefreshJobs, on
     }
   }
 
+  // Funcao para obter o nome a ser exibido do job
+  // retorna o nome se não existe retorna o ID
   const getJobDisplayName = (job) => {
     return job.job_name || job.job_id
   }
 
+  // Função para baixar os arquivos de um job
+  // Realiza um fetch (get) asyncrono no endpoint download da api
   const downloadJobFiles = async (e, jobId, jobName) => {
     e.stopPropagation() // Prevent job selection when clicking download
     
@@ -57,8 +68,10 @@ const Sidebar = ({ jobs, selectedJobId, onSelectJob, onNewJob, onRefreshJobs, on
   }
 
   return (
+    // Definição do componente Sidebar
     <div className="w-96 sidebar-container flex flex-col h-screen fixed left-0 top-20 z-10">
       {/* Fixed Header */}
+      {/* Card com botões de interação da sidebar, como home, new job, refresh */}
       <div className="flex-shrink-0 p-6 shadow-2xl"
            style={{
              background: 'rgba(255, 255, 255, 0.2)',
@@ -66,6 +79,8 @@ const Sidebar = ({ jobs, selectedJobId, onSelectJob, onNewJob, onRefreshJobs, on
              border: '1px solid rgba(255, 255, 255, 0.3)',
              borderBottom: '1px solid rgba(255, 255, 255, 0.2)'
            }}>
+
+          {/* Card para os botões de interação HOME, New Jobm refresh */}
         <div className="flex flex-col gap-4 mb-6">
           <button
             onClick={onHome}
@@ -95,6 +110,7 @@ const Sidebar = ({ jobs, selectedJobId, onSelectJob, onNewJob, onRefreshJobs, on
 
       {/* Scrollable Jobs List */}
       <div className="flex-1 overflow-y-auto p-4">
+        {/* Realiza um ternor verificando se há jobs na lista de jobs */}
         {jobs.length === 0 ? (
           <div className="text-center py-8">
             <div className="rounded-2xl p-8 shadow-2xl transition-all duration-300 hover:scale-105"
@@ -114,27 +130,30 @@ const Sidebar = ({ jobs, selectedJobId, onSelectJob, onNewJob, onRefreshJobs, on
             </div>
           </div>
         ) : (
+          // Mapeia cada job na lista de jobs e gera um card com as informações do JOB
           <div className="space-y-4">
             {jobs.map((job) => {
               const { date, time } = formatDate(job.timestamp)
               const isSelected = selectedJobId === job.job_id
               const isCompleted = job.status === 'completed'
-              
+
+              {/* Card com informações do JOB */}
               return (
+                // Job Card
                 <div
                   key={job.job_id}
                   onClick={() => onSelectJob(job.job_id)}
                   className={`job-item ${
-                    isSelected 
-                      ? 'job-item-selected' 
-                      : 'job-item-default'
-                  }`}
-                >
+                    isSelected
+                    ? 'job-item-selected' 
+                    : 'job-item-default'  
+                  }`} 
+                > 
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1 mr-3 min-w-0">
                       <div className="font-bold text-gray-800 text-base truncate">
-                        {getJobDisplayName(job)}
-                      </div>
+                        {getJobDisplayName(job) }
+                      </div> 
                       {job.job_name && (
                         <div className="text-xs text-gray-500 font-mono mt-1 truncate">
                           {job.job_id}

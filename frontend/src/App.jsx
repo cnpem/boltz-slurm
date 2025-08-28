@@ -87,12 +87,18 @@ function App() {
     return <LandingPage onGetStarted={handleGetStarted} />
   }
   // TODO continuar documentando apartir daqui
+
+  // Construção do componente e adição das propriedades
   return (
+
     <div className="min-h-screen main-container">
       {/* Fixed Header */}
+      {/* Renderiza o componente Header */}
       <Header />
       
       {/* Fixed Sidebar */}
+      {/* Renderiza o componente Sidebar */}
+      {/* Com as props do Sidebar */}
       <Sidebar 
         jobs={jobs}
         selectedJobId={selectedJobId}
@@ -104,27 +110,30 @@ function App() {
 
       {/* Main Content with margins to account for fixed header and sidebar */}
       <div className="ml-96 pt-20 min-h-screen flex flex-col">
+        {/* Renderiza o componente InputView caso a currentView seja 'input' */}
         {currentView === 'input' && (
           <InputView 
-            onJobSubmitted={loadJobs}
-            onShowLoading={() => setCurrentView('loading')}
+            onJobSubmitted={loadJobs} // Props para carregar os Jobs
+            onShowLoading={() => setCurrentView('loading')} // Props para mostrar a tela de loading
           />
         )}
-        
+
+        {/* Renderiza o componente ResultsView caso a currentView seja 'results' */}
         {currentView === 'results' && (
           <ResultsView 
-            jobId={selectedJobId}
-            onBackToInput={() => showView('input')}
-            onNewJob={() => showView('input')}
+            jobId={selectedJobId} //  Prop que recupera o estado do job selecionado
+            onBackToInput={() => showView('input')} // Props para voltar para a tela de input
+            onNewJob={() => showView('input')} // Props para criar um novo job
           />
         )}
         
+        {/* Renderiza o componente LoadingView caso a currentView seja 'loading' */}
         {currentView === 'loading' && (
           <LoadingView 
             onComplete={() => {
-              loadJobs()
-              setCurrentView('input')
-            }}
+              loadJobs() // Recarrega a lista de jobs
+              setCurrentView('input') // Reseta a view atual para 'input'
+            }} // Props para lidar com a conclusão do job
             onJobCompleted={handleJobCompleted}
           />
         )}

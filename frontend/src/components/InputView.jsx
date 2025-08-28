@@ -3,15 +3,16 @@ import SequenceInput from './SequenceInput'
 import ConstraintInput from './ConstraintInput'
 import TemplateInput from './TemplateInput'
 
+// Componente InputView que gerencia o formulário de entrada para submissão de jobs
 const InputView = ({ onJobSubmitted, onShowLoading, onBackToHome }) => {
-  const [jobName, setJobName] = useState('')
-  const [sequences, setSequences] = useState([])
-  const [constraints, setConstraints] = useState([])
-  const [templates, setTemplates] = useState([])
-  const [enableAffinity, setEnableAffinity] = useState(false)
-  const [affinityBinder, setAffinityBinder] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [showExamples, setShowExamples] = useState(false)
+  const [jobName, setJobName] = useState('') // Guardo o estado do jobname com set para atualizar o jobname atual, inicia vazio
+  const [sequences, setSequences] = useState([]) // Guardo o estado das sequências com set para atualizar as sequências atuais, inicia vazio
+  const [constraints, setConstraints] = useState([]) // Guardo o estado das restrições com set para atualizar as restrições atuais, inicia vazio
+  const [templates, setTemplates] = useState([]) // Guardo o estado dos templates com set para atualizar os templates atuais, inicia vazio
+  const [enableAffinity, setEnableAffinity] = useState(false) // Guardo o estado da afinidade com set para atualizar a afinidade atual, inicia falso
+  const [affinityBinder, setAffinityBinder] = useState('') // Guardo o estado do binder de afinidade com set para atualizar o binder de afinidade atual, inicia vazio
+  const [isSubmitting, setIsSubmitting] = useState(false) // Guardo o estado de submissão com set para atualizar o estado de submissão atual, inicia falso
+  const [showExamples, setShowExamples] = useState(false) // Guardo o estado de exibição de exemplos com set para atualizar o estado de exibição de exemplos atual, inicia falso
 
   // Example templates
   const examples = [
@@ -241,6 +242,8 @@ const InputView = ({ onJobSubmitted, onShowLoading, onBackToHome }) => {
     setAffinityBinder('B')
   }, [])
 
+  // Função para adicionar uma nova sequência
+  // Adiciona uma nova sequência ao estado com valores default no input
   const addSequence = (type) => {
     const newSequence = {
       id: Date.now().toString(),
@@ -261,16 +264,25 @@ const InputView = ({ onJobSubmitted, onShowLoading, onBackToHome }) => {
     }
   }
 
+  // Função para atualizar uma sequência existente
   const updateSequence = (id, updates) => {
+    // Recebe id e dados
+    // Chama o setter do estado sequences
+    // Verifica cada sequência na lista e substitui
+    // com as de mesmo dado
     setSequences(prev => prev.map(seq => 
       seq.id === id ? { ...seq, ...updates } : seq
     ))
   }
 
+  // Função para remove a sequence do array de sequencias
+
   const removeSequence = (id) => {
+    // Filtra o array de sequências pelo id passado
     setSequences(prev => prev.filter(seq => seq.id !== id))
   }
 
+  // Adciciona constraint e as opções 
   const addConstraint = (type) => {
     const newConstraint = {
       id: Date.now().toString(),
@@ -280,9 +292,11 @@ const InputView = ({ onJobSubmitted, onShowLoading, onBackToHome }) => {
       ...(type === 'pocket' && { binder: '', contacts: '', max_distance: null }),
       ...(type === 'contact' && { token1: '', token2: '', max_distance: null })
     }
+    // Seta estado com a nova constraint
     setConstraints(prev => [...prev, newConstraint])
   }
 
+  // Função para atualizar uma constraint existente
   const updateConstraint = (id, updates) => {
     setConstraints(prev => prev.map(constraint => 
       constraint.id === id ? { ...constraint, ...updates } : constraint
@@ -293,6 +307,7 @@ const InputView = ({ onJobSubmitted, onShowLoading, onBackToHome }) => {
     setConstraints(prev => prev.filter(constraint => constraint.id !== id))
   }
 
+  // Função para adicionar um template
   const addTemplate = () => {
     const newTemplate = {
       id: Date.now().toString(),
@@ -313,11 +328,13 @@ const InputView = ({ onJobSubmitted, onShowLoading, onBackToHome }) => {
     setTemplates(prev => prev.filter(template => template.id !== id))
   }
 
+  // Função para obter o ID da cadeia padrão
   const getDefaultChainId = () => {
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     return letters[sequences.length] || 'A'
   }
 
+  // Função para validar o formulário antes da submissão
   const validateForm = () => {
     if (sequences.length === 0) {
       alert('Please add at least one sequence.')
@@ -346,7 +363,9 @@ const InputView = ({ onJobSubmitted, onShowLoading, onBackToHome }) => {
     return true
   }
 
+  // Processa as constraints para submissão
   const processConstraintsForSubmission = () => {
+    // Converte os números de string para inteiro
     const parseContactTokens = (tokens) => {
       return tokens.map(token => {
         // Convert string residue indices to integers
@@ -357,20 +376,30 @@ const InputView = ({ onJobSubmitted, onShowLoading, onBackToHome }) => {
       })
     }
 
+    // Retorna as constraints processadas
     return constraints.map(constraint => {
+      // Cria um objeto para armazenar o resultado
       const result = {}
-      
+
+      // Processa as constraints com base no tipo
       if (constraint.type === 'bond') {
+        // Converte a string em integer
         result.bond = {
           atom1: parseContactTokens(constraint.atom1.split(',').map(s => s.trim())),
           atom2: parseContactTokens(constraint.atom2.split(',').map(s => s.trim()))
         }
       } else if (constraint.type === 'pocket') {
+        // Converte a string em integer
         const contacts = constraint.contacts.split('\n')
           .map(line => line.trim())
           .filter(line => line)
           .map(line => parseContactTokens(line.split(',').map(s => s.trim())))
-        
+        // Alimenta o objeto result com o pocket e atribui qual o binder e os residuos de contato
+        // exemplo:
+        // binder: 'A',
+        // contacts: [[1, 2], [3, 4]]
+        // max_distance: 5
+        // TODO: force: true ou false para forçar o binder no sitio
         result.pocket = {
           binder: constraint.binder,
           contacts: contacts
@@ -391,9 +420,10 @@ const InputView = ({ onJobSubmitted, onShowLoading, onBackToHome }) => {
       }
       
       return result
-    }).filter(constraint => Object.keys(constraint).length > 0)
+    }).filter(constraint => Object.keys(constraint).length > 0) // Filtra pelas constrains que estão populadas
   }
 
+  // Função responsável por processar os templates antes da submissão
   const processTemplatesForSubmission = () => {
     return templates.map(template => {
       const result = { cif: template.cif }
@@ -409,7 +439,7 @@ const InputView = ({ onJobSubmitted, onShowLoading, onBackToHome }) => {
       return result
     }).filter(template => template.cif)
   }
-
+  // Função para lidar com a submissão do formulário
   const handleSubmit = async (e) => {
     e.preventDefault()
     
@@ -419,6 +449,8 @@ const InputView = ({ onJobSubmitted, onShowLoading, onBackToHome }) => {
     onShowLoading()
 
     try {
+      // Prepare o formulaario para envia, adicionando a propriedade
+      // no array no spread somente se o valor a esquerda do && for verdadeiro
       const formData = {
         version: 1,
         ...(jobName && { job_name: jobName }),
@@ -451,7 +483,8 @@ const InputView = ({ onJobSubmitted, onShowLoading, onBackToHome }) => {
       if (processedTemplates.length > 0) {
         formData.templates = processedTemplates
       }
-
+      
+      // Faz o fetch usando POST na rota /predict da api
       const response = await fetch('/predict', {
         method: 'POST',
         headers: {
@@ -476,13 +509,15 @@ const InputView = ({ onJobSubmitted, onShowLoading, onBackToHome }) => {
     }
   }
 
+  // Função para obter as opções de binder
   const getBinderOptions = () => {
     return sequences.map(seq => ({
       value: seq.chainId,
       label: `${seq.chainId} (${seq.entity_type})`
     }))
   }
-
+  // Função para carregar um exemplo pré-definido
+  // Atualiza o estado com os dados do exemplo selecionado
   const loadExample = (example) => {
     setJobName(example.data.jobName)
     
@@ -491,9 +526,11 @@ const InputView = ({ onJobSubmitted, onShowLoading, onBackToHome }) => {
       ...seq,
       id: Date.now().toString() + '_seq_' + index
     }))
-    
+    // popula o estado com a sequencia selecionada
     setSequences(sequencesWithNewIds)
+    // seta a afinidade para true
     setEnableAffinity(example.data.affinityEnabled)
+    // seta o binder para calcular afinidade
     setAffinityBinder(example.data.affinityBinder)
     setShowExamples(false)
     
@@ -503,6 +540,7 @@ const InputView = ({ onJobSubmitted, onShowLoading, onBackToHome }) => {
         ...constraint,
         id: Date.now().toString() + '_constraint_' + index
       }))
+      // seta o constraints com novos IDs
       setConstraints(constraintsWithNewIds)
     } else {
       setConstraints([])
@@ -525,6 +563,7 @@ const InputView = ({ onJobSubmitted, onShowLoading, onBackToHome }) => {
     }, 100)
   }
 
+  // Renderiza o component com as propriedas e estados
   return (
     <div className="flex-1 p-8 overflow-y-auto main-container">
       <div className="max-w-4xl mx-auto">
@@ -553,7 +592,7 @@ const InputView = ({ onJobSubmitted, onShowLoading, onBackToHome }) => {
                 <p className="text-blue-700 font-semibold">Load pre-configured examples to get started quickly</p>
               </div>
               <button
-                onClick={() => setShowExamples(!showExamples)}
+                onClick={() => setShowExamples(!showExamples)} // Alterna a visibilidade dos exemplos. inicia nao visivel
                 className="btn-primary bg-blue-600 hover:bg-blue-700 flex items-center space-x-2"
               >
                 <span>{showExamples ? 'Hide' : 'Show'} Examples</span>
