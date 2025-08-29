@@ -1,9 +1,11 @@
 import { useState } from 'react'
-
+// Componente para entrada de sequências de proteinas, ligantes, dna, rna
 const SequenceInput = ({ sequence, onUpdate, onRemove }) => {
-  const [isDragOver, setIsDragOver] = useState(false)
+  const [isDragOver, setIsDragOver] = useState(false) // Estado que controla se o elemento está sendo arrastado sobre ele
 
+  // Função para lidar com o upload de arquivos
   const handleFileUpload = (file) => {
+    // Valida se o arquivo MSA é válido
     if (file && file.name.endsWith('.a3m')) {
       onUpdate({ msa: file.name })
     } else {
@@ -11,16 +13,18 @@ const SequenceInput = ({ sequence, onUpdate, onRemove }) => {
     }
   }
 
+  // Função para lidar com o arrasto de arquivos
   const handleDragOver = (e) => {
     e.preventDefault()
     setIsDragOver(true)
   }
-
+  // Função para lidar quando o arquivo sai da área de arrasto
   const handleDragLeave = (e) => {
     e.preventDefault()
     setIsDragOver(false)
   }
 
+  // Função para lidar com o drop de arquivos
   const handleDrop = (e) => {
     e.preventDefault()
     setIsDragOver(false)
@@ -30,12 +34,15 @@ const SequenceInput = ({ sequence, onUpdate, onRemove }) => {
     }
   }
 
+  // Função para lidar com a mudança de arquivos
   const handleFileChange = (e) => {
     const file = e.target.files[0]
     if (file) {
       handleFileUpload(file)
     }
   }
+
+  // Função para obter o ícone da sequência com base no tipo
   const getSequenceIcon = (type) => {
     switch (type) {
       case 'protein': return '🧬'
@@ -46,6 +53,7 @@ const SequenceInput = ({ sequence, onUpdate, onRemove }) => {
     }
   }
 
+  // Função para obter a cor da sequência com base no tipo
   const getSequenceColor = (type) => {
     switch (type) {
       case 'protein': return 'glass-card-blue'

@@ -1,22 +1,26 @@
 import { useState, useEffect } from 'react'
 import MolstarViewer from './MolstarViewer'
 
+// Componente que exibe os resultados da predição
 const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
-  const [jobData, setJobData] = useState(null)
-  const [resultsData, setResultsData] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [jobData, setJobData] = useState(null) // Estado para armazenar os dados do job
+  const [resultsData, setResultsData] = useState(null) // Estado para armazenar os dados dos resultados
+  const [loading, setLoading] = useState(true) // Estado para controlar o carregamento
 
+  // Efeito para carregar os detalhes do job quando o jobId mudar
   useEffect(() => {
     if (jobId) {
       loadJobDetails()
     }
   }, [jobId])
 
+  // Função para carregar os detalhes do job
   const loadJobDetails = async () => {
     try {
       setLoading(true)
       
       // Load formatted results using the new endpoint
+      // Realiza um fetch(get) no endpoint results
       const response = await fetch(`/api/jobs/${jobId}/results`)
       const data = await response.json()
       
@@ -33,13 +37,17 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
     }
   }
 
+  // Função para baixar o arquivo PDB
+  // Faz um get no endpoint do pdb da api
   const downloadPDB = async () => {
     try {
       const response = await fetch(`/api/jobs/${jobId}/pdb`)
       if (!response.ok) {
         throw new Error('PDB file not found')
       }
-      
+      // Transforma o arquivo pdb em um blob
+      // Cria um link para download do blob caarregado
+  
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -56,13 +64,18 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
     }
   }
 
+  // Função para baixar os resultados tratados
   const downloadResults = async () => {
+    // Faz um get no endpoint dos resultados da api
     try {
       const response = await fetch(`/api/jobs/${jobId}/results`)
       if (!response.ok) {
         throw new Error('Results not found')
       }
       
+      // Parse os dados para json
+      // Gera um blob com os dados
+      // Cria o url para download e disponibiliza para o usuário clicar
       const data = await response.json()
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
       const url = window.URL.createObjectURL(blob)
@@ -80,13 +93,16 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
     }
   }
 
+  // Função para baixar todos os arquivos
   const downloadAllFiles = async () => {
+    // Tenta baixar o arquivo zip completo
     try {
-      const response = await fetch(`/api/jobs/${jobId}/download`)
+      const response = await fetch(`/api/jobs/${jobId}/download`) // Get no endpoint de download com o id do Job
       if (!response.ok) {
         throw new Error('Download archive not available')
       }
-      
+
+      // Transforma o arquivo zip em um blob
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -105,10 +121,12 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
     }
   }
 
+  // Formata a data para exibição
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString()
   }
 
+  // Obtém a cor do status
   const getStatusColor = (status) => {
     switch (status) {
       case 'completed': return 'text-green-700 bg-green-100 border-green-300'
@@ -119,12 +137,17 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
       default: return 'text-gray-700 bg-gray-100 border-gray-300'
     }
   }
-
+  // TODO: REMOVER OU TROCAR A REPRESENTAÇÃO
+  // LOGICD50 NORMALINZADO EM 10-6 molar - model outpu
+  // tira log e multiplicar por 10-6 que ai vira IC 50 e converter para nano molar
+  // apresentar apena o pIC50 sem ser kcal/mol, remover a constante 1,364
+  
   const convertToPIC50 = (modelOutput) => {
     // Convert model output to pIC50 in kcal/mol using formula: (6 - y) * 1.364
     return (6 - modelOutput) * 1.364
   }
 
+  // Obtém a interpretação da afinidade com base no output do modelo
   const getAffinityInterpretation = (modelOutput) => {
     if (modelOutput <= -2) return { strength: "Very Strong", color: "text-green-700", description: "IC50 < 10⁻⁸ M" }
     if (modelOutput <= -1) return { strength: "Strong", color: "text-green-600", description: "IC50 ≈ 10⁻⁹ M" }
@@ -133,6 +156,7 @@ const ResultsView = ({ jobId, onBackToInput, onNewJob }) => {
     return { strength: "Very Weak/Decoy", color: "text-red-600", description: "IC50 > 10⁻⁴ M" }
   }
 
+  // Renderização dos resultados de afinidade
   const renderAffinityResults = (affinityData) => {
     if (!affinityData || !affinityData.detailed) return null
 

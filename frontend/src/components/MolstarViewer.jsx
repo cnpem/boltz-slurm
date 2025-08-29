@@ -1,23 +1,30 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Viewer } from '@rcsb/rcsb-molstar/build/src/viewer';
 
+// Componente para visualização de estruturas moleculares
 export default function MolstarViewer({ jobId }) {
-  const viewerRef = useRef(null);
-  const viewerInstance = useRef(null);
+  const viewerRef = useRef(null); // Objeto mútavel que não causa a renderização do componente e que receberá o objeto do molstar
+  const viewerInstance = useRef(null); // Armazena a instância do visualizador
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // caça useEffect assim que o  componente é montado
   useEffect(() => {
-    let mounted = true;
-
+    let mounted = true; // flag para verificar se o viewer está montado
+    // Função de inicialização do viewer
     const initViewer = async () => {
+      // se o ref do viewer não estiver definido ou a instância já existir, não faz nada
       if (!viewerRef.current || viewerInstance.current) return;
 
+      // Cria a instância do visualizador
       try {
         setError(null);
         setIsLoading(true);
 
         // Create viewer with more constrained settings
+        // Cria um novo objeto Viewer do molstar
+        // Adiciona o objeto mutável para todo lifecicle do componente
+        // Configurações para desabilitar controles desnecessários
         viewerInstance.current = new Viewer(viewerRef.current, {
           layoutIsExpanded: false,
           layoutShowControls: false,
@@ -29,7 +36,8 @@ export default function MolstarViewer({ jobId }) {
           viewportShowAnimation: false,
           showQuickStylesControls: true
         });
-
+        
+        //
         if (!mounted) return;
 
         // Try to load the structure

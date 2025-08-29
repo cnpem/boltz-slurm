@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react'
 
+// Componente de visualização de carregamento
 const LoadingView = ({ onComplete, onJobCompleted }) => {
-  const [submittedJobId, setSubmittedJobId] = useState(null)
-  const [pollingInterval, setPollingInterval] = useState(null)
-
-  useEffect(() => {
+  const [submittedJobId, setSubmittedJobId] = useState(null) // Estado que armazena o ID do trabalho enviado  
+  const [pollingInterval, setPollingInterval] = useState(null) // Estado que armazena o intervalo de polling
+  // Carrega useeffect a cada 2s 
+  useEffect(() => { 
     // Start polling for the most recent job
     const startPolling = () => {
+      // variavel de intervalo
       const interval = setInterval(async () => {
         try {
+          // Faz a requisição para obter o status dos trabalhos
           const response = await fetch('/api/jobs')
           const data = await response.json()
           
